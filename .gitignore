@@ -1,0 +1,9 @@
+# OS
+.DS_Store
+
+# Editor
+.vscode/
+.idea/
+
+# Local settings (users should not commit their local settings)
+.claude/settings.local.json
