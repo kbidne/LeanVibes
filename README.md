@@ -8,6 +8,7 @@ A lightweight backlog management workflow for Claude Code + GitHub Projects. Cre
 - **Proactive Suggestions** - Claude identifies deferrable work during conversations
 - **Priority-Based Organization** - High, medium, low priority labels
 - **GitHub Projects Integration** - Visual board for tracking progress
+- **Automatic Issue Linking** - Commits and PRs auto-reference the issue being worked on
 
 ## Installation
 
@@ -92,6 +93,24 @@ During conversations, when Claude identifies work that could be deferred:
 |  [backlog] - Add to backlog                              |
 |  [backlog high/medium/low] - Add with priority           |
 +----------------------------------------------------------+
+```
+
+## Automatic Issue Linking
+
+When you work on a backlog item using `/backlog [number]`, Claude automatically:
+
+1. **Includes `Fixes #[number]` in commit messages** - Links commits to the issue
+2. **Includes `Closes #[number]` in PR descriptions** - Auto-closes the issue when PR merges
+
+This ensures full traceability between your backlog items and the code changes that address them.
+
+Example commit:
+```
+Add user authentication
+
+Fixes #42
+
+🤖 Generated with Claude Code
 ```
 
 ## Labels Created
