@@ -81,21 +81,35 @@ echo ""
 
 echo "Setting up project board..."
 
-# Check if project exists
-PROJECT_EXISTS=$(gh project list --owner @me --format json | grep -c '"title":"Backlog"' || true)
-
-if [ "$PROJECT_EXISTS" -gt 0 ]; then
-    echo "  - Project 'Backlog' already exists"
+# Check if we have the project scope
+if ! gh project list --owner @me &>/dev/null; then
+    echo "  ! Missing 'project' scope for GitHub CLI"
+    echo ""
+    echo "  To enable project board integration, run:"
+    echo "    gh auth refresh -s project"
+    echo ""
+    echo "  Then re-run this script."
 else
-    # Create the project
-    PROJECT_URL=$(gh project create --owner @me --title "Backlog" --format json 2>/dev/null | grep -o '"url":"[^"]*"' | cut -d'"' -f4)
+    # Check if project exists
+    PROJECT_EXISTS=$(gh project list --owner @me --format json 2>/dev/null | grep -c '"title":"Backlog"' || true)
 
-    if [ -n "$PROJECT_URL" ]; then
-        echo "  + Created project: Backlog"
-        echo "    URL: $PROJECT_URL"
+    if [ "$PROJECT_EXISTS" -gt 0 ]; then
+        echo "  - Project 'Backlog' already exists"
     else
-        echo "  ! Could not create project (may require manual setup)"
-        echo "    Visit: https://github.com/$REPO/projects"
+        # Create the project - check exit code, not output
+        if gh project create --owner @me --title "Backlog" 2>/dev/null; then
+            echo "  + Created project: Backlog"
+
+            # Get the project URL
+            PROJECT_NUM=$(gh project list --owner @me --format json 2>/dev/null | grep -o '"number":[0-9]*' | head -1 | cut -d: -f2)
+            if [ -n "$PROJECT_NUM" ]; then
+                OWNER=$(gh api user --jq '.login' 2>/dev/null)
+                echo "    URL: https://github.com/users/$OWNER/projects/$PROJECT_NUM"
+            fi
+        else
+            echo "  ! Could not create project (may require manual setup)"
+            echo "    Visit: https://github.com/$REPO/projects"
+        fi
     fi
 fi
 

@@ -58,7 +58,11 @@ Argument: $ARGUMENTS
 
 5. **Add to project board** (if configured):
    ```bash
-   gh issue edit [number] --add-project "Backlog"
+   # Get the Backlog project number
+   PROJECT_NUM=$(gh project list --owner @me --format json 2>/dev/null | jq -r '.projects[] | select(.title=="Backlog") | .number' 2>/dev/null)
+
+   # Add issue to project using item-add (works for user projects)
+   gh project item-add $PROJECT_NUM --owner @me --url [issue URL]
    ```
 
 6. **Confirm to user**:

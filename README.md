@@ -34,15 +34,19 @@ From your project root:
 ./.claude/scripts/setup-backlog.sh
 ```
 
-This creates the required labels and project board in your GitHub repo.
+This creates the required labels in your repo and a "Backlog" project board.
+
+> **Note:** GitHub Projects (v2) are owned by users or organizations, not individual repositories. The setup script creates a user-level project that can include issues from any of your repos. Issues are still created in the specific repo where you run the commands.
 
 ### 3. Prerequisites
 
 - [GitHub CLI](https://cli.github.com/) installed and authenticated
+- **Project scope** enabled (for project board integration)
 
 ```bash
 brew install gh
 gh auth login
+gh auth refresh -s project   # Enable project board access
 ```
 
 ## Usage
