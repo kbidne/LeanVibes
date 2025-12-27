@@ -1,0 +1,105 @@
+# Backlog Workflow
+
+This project uses the LeanVibes backlog workflow with GitHub Issues and Projects.
+
+## Proactive Backlog Suggestions
+
+When identifying work that could be deferred, present a backlog suggestion box.
+Suggest adding to backlog when:
+- Work is tangential to the main task
+- It's an enhancement rather than a requirement
+- It would significantly expand scope
+- The user mentions "later" or "eventually"
+- You identify technical debt or optimization opportunities
+
+When suggesting, use this format:
+```
++----------------------------------------------------------+
+|  BACKLOG SUGGESTION                                      |
+|                                                          |
+|  "[Brief description of the work]"                       |
+|                                                          |
+|  [Why this could be deferred]                            |
+|                                                          |
+|  - Type: [feature/bug/enhancement/debt]                  |
+|  - Suggested Priority: [high/medium/low]                 |
+|                                                          |
+|  Reply with:                                             |
+|  - "do it" to implement now                              |
+|  - "backlog" to add to backlog                           |
+|  - "backlog [priority]" to add with specific priority    |
++----------------------------------------------------------+
+```
+
+## Adding to Backlog
+
+When user says "backlog" or "add to backlog", create a GitHub Issue:
+
+```bash
+gh issue create \
+  --title "[title]" \
+  --body "## Summary
+[Description]
+
+## Context
+Added during Cursor session.
+
+## Acceptance Criteria
+- [ ] [Criteria based on the work]
+- [ ] Verify implementation works as expected
+- [ ] No regressions introduced
+
+---
+*Created via LeanVibes backlog workflow*" \
+  --label "backlog" \
+  --label "priority:[high/medium/low]" \
+  --label "type:[feature/bug/enhancement/debt]"
+```
+
+Then add to project board:
+```bash
+PROJECT_NUM=$(gh project list --owner @me --format json 2>/dev/null | grep -o '"number":[0-9]*' | head -1 | cut -d: -f2)
+gh project item-add $PROJECT_NUM --owner @me --url [issue URL]
+```
+
+## Working on Backlog Items
+
+When user asks to work on a backlog item, fetch and display it:
+
+```bash
+gh issue view [number] --json title,body,labels,comments
+```
+
+Display:
+```
+Working on #[number]: [title]
+Commits will include: Fixes #[number]
+```
+
+## Commit Messages
+
+When working on a backlog item, always include the issue reference:
+
+```
+[Commit message]
+
+Fixes #[number]
+```
+
+## Pull Requests
+
+When creating PRs for backlog items, include in the description:
+
+```
+Closes #[number]
+```
+
+## Viewing Backlog
+
+When user asks to see backlog, run:
+
+```bash
+gh issue list --label backlog --state open --json number,title,labels --limit 50
+```
+
+Display organized by priority (high, medium, low, unprioritized).

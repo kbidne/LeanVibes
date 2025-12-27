@@ -1,30 +1,42 @@
 # LeanVibes
 
-A lightweight backlog management workflow for Claude Code + GitHub Projects. Create and manage GitHub Issues from your Claude Code conversations.
+A lightweight backlog management workflow for AI coding assistants + GitHub Projects. Create and manage GitHub Issues from your conversations with AI.
 
-## Features
+## Supported Tools
 
-- **Quick Issue Creation** - Add items to backlog without leaving Claude Code
-- **Proactive Suggestions** - Claude identifies deferrable work during conversations
+| Tool | Status | Folder |
+|------|--------|--------|
+| [Claude Code](claude-code/) | Full support | `claude-code/` |
+| [Cursor](cursor/) | Full support | `cursor/` |
+| [GitHub Copilot](github-copilot/) | Instructions only | `github-copilot/` |
+
+## Core Features
+
+- **Quick Issue Creation** - Add items to backlog without leaving your AI assistant
+- **Proactive Suggestions** - AI identifies deferrable work during conversations
 - **Priority-Based Organization** - High, medium, low priority labels
 - **GitHub Projects Integration** - Visual board for tracking progress
 - **Automatic Issue Linking** - Commits and PRs auto-reference the issue being worked on
 
-## Installation
+## How It Works
 
-### 1. Copy to Your Project
+1. **Setup** - Run the shared setup script to create labels and project board
+2. **Add Items** - Use tool-specific commands to add backlog items
+3. **Work on Items** - Pull items from backlog, AI tracks the issue
+4. **Auto-Link** - Commits include `Fixes #X`, PRs include `Closes #X`
+5. **Auto-Close** - Issues close automatically when code merges
 
-Copy the `.claude` directory to your project root:
+## Quick Start
+
+### 1. Prerequisites
+
+- [GitHub CLI](https://cli.github.com/) installed and authenticated
+- Project scope enabled for project board integration
 
 ```bash
-cp -r /path/to/LeanVibes/.claude /your/project/
-```
-
-Or clone and copy:
-
-```bash
-git clone https://github.com/YOUR_USERNAME/LeanVibes.git
-cp -r LeanVibes/.claude /your/project/
+brew install gh
+gh auth login
+gh auth refresh -s project
 ```
 
 ### 2. Run Setup Script
@@ -32,86 +44,32 @@ cp -r LeanVibes/.claude /your/project/
 From your project root:
 
 ```bash
-./.claude/scripts/setup-backlog.sh
+# Download and run the setup script
+curl -sL https://raw.githubusercontent.com/kbidne/LeanVibes/main/scripts/setup-backlog.sh | bash
 ```
 
-This creates the required labels in your repo and a "Backlog" project board.
-
-> **Note:** GitHub Projects (v2) are owned by users or organizations, not individual repositories. The setup script creates a user-level project that can include issues from any of your repos. Issues are still created in the specific repo where you run the commands.
-
-### 3. Prerequisites
-
-- [GitHub CLI](https://cli.github.com/) installed and authenticated
-- **Project scope** enabled (for project board integration)
+Or clone and run:
 
 ```bash
-brew install gh
-gh auth login
-gh auth refresh -s project   # Enable project board access
+git clone https://github.com/kbidne/LeanVibes.git
+./LeanVibes/scripts/setup-backlog.sh
 ```
 
-## Usage
+This creates labels in your repo and a "Backlog" project board.
 
-### `/backlog` - View & Work on Backlog
+> **Note:** GitHub Projects (v2) are owned by users or organizations, not individual repositories. The setup script creates a user-level project that can include issues from any of your repos.
 
-```
-/backlog              # List all backlog items by priority
-/backlog 42           # Start working on issue #42
-/backlog suggest      # Get Claude's recommendation
-```
+### 3. Install Tool-Specific Files
 
-### `/backlog-add` - Quick Add to Backlog
+Choose your AI coding assistant and follow the instructions in that folder:
 
-```
-/backlog-add high feature Add user authentication
-/backlog-add medium bug Fix mobile navigation
-/backlog-add low enhancement Improve loading states
-```
+- **[Claude Code](claude-code/)** - Copy `.claude/` folder and `CLAUDE.md`
+- **[Cursor](cursor/)** - Copy `.cursorrules` file
+- **[GitHub Copilot](github-copilot/)** - Use the provided prompt instructions
 
-Format: `/backlog-add [priority] [type] [title]`
+### 4. Try the Example Project (Optional)
 
-**Priorities:** `high`, `medium`, `low`
-
-**Types:** `feature`, `bug`, `enhancement`, `debt`
-
-## How It Works
-
-During conversations, when Claude identifies work that could be deferred:
-
-```
-+----------------------------------------------------------+
-|  BACKLOG SUGGESTION                                      |
-|                                                          |
-|  "Add responsive breakpoints to the dashboard"           |
-|                                                          |
-|  This enhancement isn't blocking current work.           |
-|                                                          |
-|  - Type: enhancement                                     |
-|  - Suggested Priority: medium                            |
-|                                                          |
-|  [do it] - Implement now                                 |
-|  [backlog] - Add to backlog                              |
-|  [backlog high/medium/low] - Add with priority           |
-+----------------------------------------------------------+
-```
-
-## Automatic Issue Linking
-
-When you work on a backlog item using `/backlog [number]`, Claude automatically:
-
-1. **Includes `Fixes #[number]` in commit messages** - Links commits to the issue
-2. **Includes `Closes #[number]` in PR descriptions** - Auto-closes the issue when PR merges
-
-This ensures full traceability between your backlog items and the code changes that address them.
-
-Example commit:
-```
-Add user authentication
-
-Fixes #42
-
-🤖 Generated with Claude Code
-```
+New to LeanVibes? Check out the **[example project](example/)** - a fake auth system with a guided walkthrough to practice the workflow.
 
 ## Labels Created
 
@@ -126,36 +84,14 @@ Fixes #42
 | `type:enhancement` | Purple | Improvements to existing features |
 | `type:debt` | Tan | Technical debt / refactoring |
 
-## File Structure
+## Contributing
 
-```
-your-project/
-└── .claude/
-    ├── commands/
-    │   ├── backlog.md          # /backlog command
-    │   └── backlog-add.md      # /backlog-add command
-    ├── scripts/
-    │   └── setup-backlog.sh    # One-time setup script
-    └── BACKLOG_WORKFLOW.md     # Detailed documentation
-```
+Want to add support for another tool? PRs welcome! Each tool needs:
 
-## Adding to CLAUDE.md (Optional)
-
-For proactive backlog suggestions, add this to your project's CLAUDE.md:
-
-```markdown
-## Backlog Workflow
-
-This project uses the LeanVibes backlog workflow.
-
-When identifying work that could be deferred, present a backlog suggestion box.
-Suggest adding to backlog when:
-- Work is tangential to the main task
-- It's an enhancement rather than a requirement
-- It would significantly expand scope
-- The user mentions "later" or "eventually"
-- You identify technical debt or optimization opportunities
-```
+1. A folder with the tool name
+2. A README with installation instructions
+3. Tool-specific configuration files
+4. Instructions for proactive backlog suggestions
 
 ## License
 
