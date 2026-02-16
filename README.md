@@ -1,5 +1,9 @@
 <p align="center">
-  <img src="docs/logo.svg" alt="LeanVibes logo" width="120">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/logo-light.svg">
+    <source media="(prefers-color-scheme: light)" srcset="docs/logo.svg">
+    <img src="docs/logo.svg" alt="LeanVibes logo" width="120">
+  </picture>
 </p>
 
 # LeanVibes
