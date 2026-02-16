@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LeanVibes - Backlog Management for AI Coding Assistants</title>
+  <meta name="description" content="A lightweight backlog management workflow for Claude Code, Cursor, and GitHub Copilot. Powered by GitHub Issues and Projects.">
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="LeanVibes">
+  <meta property="og:description" content="Backlog management for AI coding assistants">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://kbidne.github.io/LeanVibes/">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="./favicon.svg">
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+
+  <!-- ====== Nav ====== -->
+  <nav class="nav" id="nav">
+    <div class="container">
+      <a href="#" class="nav-brand">
+        <svg viewBox="0 0 1200 1200" fill="currentColor">
+          <path d="m920.21 1066.9c-65.766 12.469-126.47 13.125-200.21 13.781-14.766 0.14062-30 0.28125-45.891 0.51562-112.97 1.6875-171 41.719-198.61 71.109-45-10.125-87.984-25.547-128.26-45.656 33-30.844 125.81-90.188 351.1-88.875 124.97 0.9375 228.1-9.7031 308.63-24.188-26.344 27.188-55.406 51.844-86.766 73.312zm120.32-111c-81.469 17.578-195.24 32.625-341.9 31.406-249.89-2.3906-346.97 68.953-379.6 104.16-29.719-17.016-57.75-36.562-83.812-58.5 41.812-34.406 156.98-113.48 342.74-123.1 77.297-3.9844 148.92-1.4062 218.21 1.0312 105.75 3.75 201.24 7.0781 287.06-15.047-12.984 20.953-27.234 41.016-42.703 60.047zm-1008-357.1c0-34.172 3.1875-67.594 9-100.12l522.47-58.219c3.9375 12.188 9.4688 23.719 16.5 34.125l-541.36 210.94c-4.3125-28.266-6.6094-57.234-6.6094-86.719zm1134.8 0c0 32.062-2.8125 63.469-7.9219 94.125l-376.69-193.22c9.8906-8.8594 18.422-19.125 25.359-30.469l357.42 86.297c1.0781 14.297 1.8281 28.688 1.8281 43.266zm-545.9-84.984c8.9531 5.5781 18.609 10.172 28.781 13.547-14.25 36-48.938 123.79-64.406 163.4-32.25-6.2812-65.016-12.141-98.484-16.781-9.0938-1.2656-18.094-2.25-27-3.0938 33.281-33.234 117.56-117.05 161.11-157.08zm122.86 211.03c-14.25-51.656-42-152.44-52.5-190.64 0.28125 0 0.5625 0.046875 0.89062 0.046875 11.531 0 22.594-1.5938 33.281-4.3125l307.97 233.9c-95.344 1.6406-190.92-17.203-289.64-39zm82.969-314.48c0.28125-3.7031 0.5625-7.4531 0.5625-11.25 0-4.5-0.23438-8.9062-0.65625-13.266l262.69-72.797c17.438 29.766 32.25 61.172 44.109 94.031zm-123.74-145.82-52.031-230.72c62.906 5.7188 122.86 21.75 178.18 46.359l-96.891 189.84c-9.3281-2.8594-19.172-4.6875-29.25-5.4844zm-63.047 9.9375c-16.266 6.8438-30.938 16.734-43.266 29.016l-286.74-192.47c65.484-39 139.4-65.109 218.34-75.047zm-157.36 429.71c75.844 10.5 148.78 26.812 219.32 42.562 148.08 33.141 288.56 64.359 433.5 37.781-1.2656 3.6562-2.4844 7.3594-3.7969 10.969-112.97 35.391-244.22 21.281-408.42 3.4688-55.594-6-113.06-12.281-175.13-17.156-213.89-16.875-379.6 73.031-435.47 108.23-19.312-32.109-35.438-66.328-48.141-102.14 52.312-29.25 220.03-111.14 418.13-83.719zm523.13-500.86-193.03 134.95c-7.8281-15.469-18.516-29.156-31.406-40.5l136.4-168.42c31.875 21.609 61.312 46.5 88.031 73.969zm-796.03-16.359 356.81 162.71c-3.4688 8.8125-6 18.094-7.5469 27.703l-460.26-45.094c29.016-54.328 66.656-103.31 111-145.31zm-80.625 728.9c52.969-32.906 214.22-119.81 416.63-103.69 61.641 4.875 118.88 11.109 174.24 17.062 156.61 17.016 283.87 30.703 396.84 2.1094-4.0312 8.8594-8.25 17.625-12.656 26.25-88.875 30.656-191.81 27.047-307.45 22.875-69.938-2.5312-142.26-5.1094-220.87-1.0312-200.63 10.359-321.94 96.844-364.26 132.89-30.891-28.969-58.641-61.266-82.453-96.469zm470.34 250.36c-29.719 0-58.922-2.3438-87.375-6.75 27.609-22.125 77.062-46.547 162-47.812 15.797-0.23438 30.984-0.375 45.703-0.51562 47.062-0.42188 89.719-0.89062 132.42-4.5469-76.172 38.062-162 59.625-252.74 59.625z"/>
+        </svg>
+        <span>LeanVibes</span>
+      </a>
+      <button class="nav-toggle" aria-label="Toggle navigation" aria-expanded="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="3" y1="6" x2="21" y2="6" />
+          <line x1="3" y1="12" x2="21" y2="12" />
+          <line x1="3" y1="18" x2="21" y2="18" />
+        </svg>
+      </button>
+      <div class="nav-links" id="nav-links">
+        <a href="#features">Features</a>
+        <a href="#how-it-works">How It Works</a>
+        <a href="#setup">Setup</a>
+        <a href="#getting-started">Get Started</a>
+      </div>
+    </div>
+  </nav>
+
+  <main>
+
+    <!-- ====== Hero ====== -->
+    <section class="hero" id="hero">
+      <div class="container">
+        <h1>Backlog management for AI coding assistants</h1>
+        <p class="hero-subtitle">
+          Turn conversations with Claude Code, Cursor, and GitHub Copilot into a prioritized backlog. Powered by GitHub Issues and Projects.
+        </p>
+        <div class="hero-actions">
+          <a href="#getting-started" class="btn btn-primary">Get Started</a>
+          <a href="https://github.com/kbidne/LeanVibes" class="btn btn-secondary" target="_blank" rel="noopener">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+            View on GitHub
+          </a>
+        </div>
+
+        <div class="hero-terminal">
+          <div class="code-block">
+            <div class="code-block-header">
+              <span class="code-block-dot"></span>
+              <span class="code-block-dot"></span>
+              <span class="code-block-dot"></span>
+            </div>
+            <pre><code><span class="prompt">$</span> <span class="command">/backlog-add high feature Add user authentication</span>
+
+<span class="output">Created backlog item <span class="highlight">#42</span>: Add user authentication</span>
+<span class="output">Priority: <span class="highlight">high</span> | Type: <span class="highlight">feature</span></span>
+<span class="output">Added to GitHub Project board</span></code></pre>
+          </div>
+        </div>
+
+        <div class="hero-tools">
+          <span>Works with:</span>
+          <span class="tool-badge">Claude Code</span>
+          <span class="tool-badge">Cursor</span>
+          <span class="tool-badge">GitHub Copilot</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====== TLDR ====== -->
+    <section class="tldr" id="tldr">
+      <div class="tldr-bg">
+        <svg class="tldr-logo" viewBox="0 0 1200 1200" fill="currentColor" aria-hidden="true">
+          <path d="m920.21 1066.9c-65.766 12.469-126.47 13.125-200.21 13.781-14.766 0.14062-30 0.28125-45.891 0.51562-112.97 1.6875-171 41.719-198.61 71.109-45-10.125-87.984-25.547-128.26-45.656 33-30.844 125.81-90.188 351.1-88.875 124.97 0.9375 228.1-9.7031 308.63-24.188-26.344 27.188-55.406 51.844-86.766 73.312zm120.32-111c-81.469 17.578-195.24 32.625-341.9 31.406-249.89-2.3906-346.97 68.953-379.6 104.16-29.719-17.016-57.75-36.562-83.812-58.5 41.812-34.406 156.98-113.48 342.74-123.1 77.297-3.9844 148.92-1.4062 218.21 1.0312 105.75 3.75 201.24 7.0781 287.06-15.047-12.984 20.953-27.234 41.016-42.703 60.047zm-1008-357.1c0-34.172 3.1875-67.594 9-100.12l522.47-58.219c3.9375 12.188 9.4688 23.719 16.5 34.125l-541.36 210.94c-4.3125-28.266-6.6094-57.234-6.6094-86.719zm1134.8 0c0 32.062-2.8125 63.469-7.9219 94.125l-376.69-193.22c9.8906-8.8594 18.422-19.125 25.359-30.469l357.42 86.297c1.0781 14.297 1.8281 28.688 1.8281 43.266zm-545.9-84.984c8.9531 5.5781 18.609 10.172 28.781 13.547-14.25 36-48.938 123.79-64.406 163.4-32.25-6.2812-65.016-12.141-98.484-16.781-9.0938-1.2656-18.094-2.25-27-3.0938 33.281-33.234 117.56-117.05 161.11-157.08zm122.86 211.03c-14.25-51.656-42-152.44-52.5-190.64 0.28125 0 0.5625 0.046875 0.89062 0.046875 11.531 0 22.594-1.5938 33.281-4.3125l307.97 233.9c-95.344 1.6406-190.92-17.203-289.64-39zm82.969-314.48c0.28125-3.7031 0.5625-7.4531 0.5625-11.25 0-4.5-0.23438-8.9062-0.65625-13.266l262.69-72.797c17.438 29.766 32.25 61.172 44.109 94.031zm-123.74-145.82-52.031-230.72c62.906 5.7188 122.86 21.75 178.18 46.359l-96.891 189.84c-9.3281-2.8594-19.172-4.6875-29.25-5.4844zm-63.047 9.9375c-16.266 6.8438-30.938 16.734-43.266 29.016l-286.74-192.47c65.484-39 139.4-65.109 218.34-75.047zm-157.36 429.71c75.844 10.5 148.78 26.812 219.32 42.562 148.08 33.141 288.56 64.359 433.5 37.781-1.2656 3.6562-2.4844 7.3594-3.7969 10.969-112.97 35.391-244.22 21.281-408.42 3.4688-55.594-6-113.06-12.281-175.13-17.156-213.89-16.875-379.6 73.031-435.47 108.23-19.312-32.109-35.438-66.328-48.141-102.14 52.312-29.25 220.03-111.14 418.13-83.719zm523.13-500.86-193.03 134.95c-7.8281-15.469-18.516-29.156-31.406-40.5l136.4-168.42c31.875 21.609 61.312 46.5 88.031 73.969zm-796.03-16.359 356.81 162.71c-3.4688 8.8125-6 18.094-7.5469 27.703l-460.26-45.094c29.016-54.328 66.656-103.31 111-145.31zm-80.625 728.9c52.969-32.906 214.22-119.81 416.63-103.69 61.641 4.875 118.88 11.109 174.24 17.062 156.61 17.016 283.87 30.703 396.84 2.1094-4.0312 8.8594-8.25 17.625-12.656 26.25-88.875 30.656-191.81 27.047-307.45 22.875-69.938-2.5312-142.26-5.1094-220.87-1.0312-200.63 10.359-321.94 96.844-364.26 132.89-30.891-28.969-58.641-61.266-82.453-96.469zm470.34 250.36c-29.719 0-58.922-2.3438-87.375-6.75 27.609-22.125 77.062-46.547 162-47.812 15.797-0.23438 30.984-0.375 45.703-0.51562 47.062-0.42188 89.719-0.89062 132.42-4.5469-76.172 38.062-162 59.625-252.74 59.625z"/>
+        </svg>
+      </div>
+      <div class="container">
+        <div class="tldr-content">
+          <h2>TL;DR</h2>
+          <p>While agentic AI is advancing at an incredible pace, thoughtful planning and disciplined execution can sometimes be overlooked. The most important principle in leveraging AI effectively is intentional planning -- take the time to research, explore ideas, and define a clear roadmap before implementation.</p>
+          <p>With Lean Vibes, your AI assistant helps translate strategy into action by breaking initiatives into epics and user stories, automatically syncing them to your GitHub issues and projects. When you're ready to execute, it surfaces outstanding work, helps you prioritize, and supports focused delivery. It's a new level of structured collaboration with your AI teammates.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====== Features ====== -->
+    <section class="features" id="features">
+      <div class="container">
+        <div class="section-header">
+          <h2>Features</h2>
+          <p>Everything you need for lightweight backlog management, built into your AI coding workflow.</p>
+        </div>
+
+        <div class="features-grid">
+          <!-- Quick Issue Creation -->
+          <div class="card feature-card">
+            <div class="feature-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M13 2L3 14h9l-1 10 10-12h-9l1-10z" />
+              </svg>
+            </div>
+            <h3>Quick Issue Creation</h3>
+            <p>Add backlog items without leaving your AI conversation. One command creates a GitHub Issue with priority and type labels.</p>
+          </div>
+
+          <!-- Proactive Suggestions -->
+          <div class="card feature-card">
+            <div class="feature-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9 18h6" />
+                <path d="M10 22h4" />
+                <path d="M12 2a7 7 0 0 1 4 12.7V17H8v-2.3A7 7 0 0 1 12 2z" />
+              </svg>
+            </div>
+            <h3>Proactive Suggestions</h3>
+            <p>Your AI identifies deferrable work and scope creep, then suggests adding it to the backlog automatically.</p>
+          </div>
+
+          <!-- Priority Organization -->
+          <div class="card feature-card">
+            <div class="feature-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="3" width="20" height="4" rx="1" />
+                <rect x="2" y="10" width="16" height="4" rx="1" />
+                <rect x="2" y="17" width="12" height="4" rx="1" />
+              </svg>
+            </div>
+            <h3>Priority Organization</h3>
+            <p>High, medium, and low priority labels keep your backlog organized. Work on what matters most, defer the rest.</p>
+          </div>
+
+          <!-- GitHub Projects -->
+          <div class="card feature-card">
+            <div class="feature-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="3" width="5" height="18" rx="1" />
+                <rect x="9.5" y="3" width="5" height="12" rx="1" />
+                <rect x="17" y="3" width="5" height="15" rx="1" />
+              </svg>
+            </div>
+            <h3>GitHub Projects Integration</h3>
+            <p>Visual Kanban board with automatic status updates. Issues flow from Backlog to Done as you work.</p>
+          </div>
+
+          <!-- Automatic Linking -->
+          <div class="card feature-card">
+            <div class="feature-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+              </svg>
+            </div>
+            <h3>Automatic Linking</h3>
+            <p>Commits include <code>Fixes #N</code>, PRs include <code>Closes #N</code>. Issues close automatically when code merges.</p>
+          </div>
+
+          <!-- One-Script Setup -->
+          <div class="card feature-card">
+            <div class="feature-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="4 17 10 11 4 5" />
+                <line x1="12" y1="19" x2="20" y2="19" />
+              </svg>
+            </div>
+            <h3>One-Script Setup</h3>
+            <p>A single bash command creates labels, a project board, and everything you need. Up and running in under 60 seconds.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====== How It Works ====== -->
+    <section class="how-it-works" id="how-it-works">
+      <div class="container">
+        <div class="section-header">
+          <h2>How It Works</h2>
+          <p>Five simple steps from setup to auto-closing issues.</p>
+        </div>
+
+        <div class="steps">
+          <!-- Step 1 -->
+          <div class="step">
+            <div class="step-line">
+              <div class="step-number">1</div>
+              <div class="step-connector"></div>
+            </div>
+            <div class="step-content">
+              <h3>Run the setup script</h3>
+              <p>Creates priority labels, type labels, and a GitHub Projects board in under 30 seconds.</p>
+              <div class="code-block">
+                <div class="code-block-header">
+                  <span class="code-block-dot"></span>
+                  <span class="code-block-dot"></span>
+                  <span class="code-block-dot"></span>
+                </div>
+                <pre><code>curl -sL https://raw.githubusercontent.com/kbidne/LeanVibes/main/scripts/setup-backlog.sh | bash</code></pre>
+                <button class="copy-btn" aria-label="Copy to clipboard">Copy</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 2 -->
+          <div class="step">
+            <div class="step-line">
+              <div class="step-number">2</div>
+              <div class="step-connector"></div>
+            </div>
+            <div class="step-content">
+              <h3>Add items to your backlog</h3>
+              <p>Create issues from your AI conversation. Specify priority and type, get a linked GitHub Issue instantly.</p>
+              <div class="code-block">
+                <div class="code-block-header">
+                  <span class="code-block-dot"></span>
+                  <span class="code-block-dot"></span>
+                  <span class="code-block-dot"></span>
+                </div>
+                <pre><code><span class="prompt">$</span> <span class="command">/backlog-add medium enhancement Improve error messages</span></code></pre>
+                <button class="copy-btn" aria-label="Copy to clipboard">Copy</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 3 -->
+          <div class="step">
+            <div class="step-line">
+              <div class="step-number">3</div>
+              <div class="step-connector"></div>
+            </div>
+            <div class="step-content">
+              <h3>Get proactive suggestions</h3>
+              <p>When your AI notices scope creep or deferrable work, it prompts you to backlog it.</p>
+              <div class="code-block">
+                <div class="code-block-header">
+                  <span class="code-block-dot"></span>
+                  <span class="code-block-dot"></span>
+                  <span class="code-block-dot"></span>
+                </div>
+                <pre><code><span class="output">+--------------------------------------------+</span>
+<span class="output">|  BACKLOG SUGGESTION                        |</span>
+<span class="output">|  This looks like scope creep.              |</span>
+<span class="output">|  Want me to add it to the backlog?          |</span>
+<span class="output">|  <span class="highlight">Priority: medium | Type: enhancement</span>     |</span>
+<span class="output">+--------------------------------------------+</span></code></pre>
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 4 -->
+          <div class="step">
+            <div class="step-line">
+              <div class="step-number">4</div>
+              <div class="step-connector"></div>
+            </div>
+            <div class="step-content">
+              <h3>Pull from backlog and build</h3>
+              <p>Select an issue and your AI loads the context. Commits automatically reference the issue number.</p>
+              <div class="code-block">
+                <div class="code-block-header">
+                  <span class="code-block-dot"></span>
+                  <span class="code-block-dot"></span>
+                  <span class="code-block-dot"></span>
+                </div>
+                <pre><code><span class="prompt">$</span> <span class="command">/backlog 42</span>
+
+<span class="output">Working on <span class="highlight">#42</span>: Add user authentication</span>
+<span class="output">Commits will include: Fixes #42</span></code></pre>
+                <button class="copy-btn" aria-label="Copy to clipboard">Copy</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 5 -->
+          <div class="step">
+            <div class="step-line">
+              <div class="step-number">5</div>
+            </div>
+            <div class="step-content">
+              <h3>Merge and auto-close</h3>
+              <p>PRs include <code>Closes #42</code>. When your PR merges, the issue closes automatically and moves to Done on your project board.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====== Tool Setup ====== -->
+    <section class="tool-setup" id="setup">
+      <div class="container">
+        <div class="section-header">
+          <h2>Choose Your Tool</h2>
+          <p>LeanVibes works with the AI coding assistants you already use.</p>
+        </div>
+
+        <div class="tool-grid">
+          <!-- Claude Code -->
+          <div class="card tool-card">
+            <span class="badge badge-primary">Full Support</span>
+            <h3>Claude Code</h3>
+            <p>Slash commands for instant backlog access. Copy the config files into your project:</p>
+            <div class="code-block">
+              <pre><code>cp -r claude-code/.claude/ your-project/</code></pre>
+              <button class="copy-btn" aria-label="Copy to clipboard">Copy</button>
+            </div>
+            <p>Use <code>/backlog</code> and <code>/backlog-add</code> slash commands directly in your conversation.</p>
+            <a href="https://github.com/kbidne/LeanVibes/tree/main/claude-code" class="card-link" target="_blank" rel="noopener">View Claude Code docs &rarr;</a>
+          </div>
+
+          <!-- Cursor -->
+          <div class="card tool-card">
+            <span class="badge badge-primary">Full Support</span>
+            <h3>Cursor</h3>
+            <p>Natural language backlog management with persistent context. Copy the rules file:</p>
+            <div class="code-block">
+              <pre><code>cp cursor/.cursorrules your-project/</code></pre>
+              <button class="copy-btn" aria-label="Copy to clipboard">Copy</button>
+            </div>
+            <p>Say "show me the backlog" or "add this to the backlog" in chat.</p>
+            <a href="https://github.com/kbidne/LeanVibes/tree/main/cursor" class="card-link" target="_blank" rel="noopener">View Cursor docs &rarr;</a>
+          </div>
+
+          <!-- GitHub Copilot -->
+          <div class="card tool-card">
+            <span class="badge badge-amber">Prompt-Based</span>
+            <h3>GitHub Copilot</h3>
+            <p>Use prompt templates to manage your backlog in Copilot Chat:</p>
+            <div class="code-block">
+              <pre><code>Paste the session prompt into Copilot Chat</code></pre>
+            </div>
+            <p>Works with any IDE that has GitHub Copilot installed.</p>
+            <a href="https://github.com/kbidne/LeanVibes/tree/main/github-copilot" class="card-link" target="_blank" rel="noopener">View Copilot docs &rarr;</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====== Getting Started ====== -->
+    <section class="getting-started" id="getting-started">
+      <div class="container">
+        <div class="section-header">
+          <h2>Get Started in 60 Seconds</h2>
+          <p>Three steps to a working backlog workflow.</p>
+        </div>
+
+        <div class="start-steps">
+          <!-- Prerequisites -->
+          <div class="start-step">
+            <h3>
+              <span class="step-number">1</span>
+              Install prerequisites
+            </h3>
+            <p>Install the GitHub CLI and enable project scope:</p>
+            <div class="code-block">
+              <div class="code-block-header">
+                <span class="code-block-dot"></span>
+                <span class="code-block-dot"></span>
+                <span class="code-block-dot"></span>
+              </div>
+              <pre><code>brew install gh
+gh auth login
+gh auth refresh -s project</code></pre>
+              <button class="copy-btn" aria-label="Copy to clipboard">Copy</button>
+            </div>
+          </div>
+
+          <!-- Run Setup -->
+          <div class="start-step">
+            <h3>
+              <span class="step-number">2</span>
+              Run the setup script
+            </h3>
+            <p>Creates labels and a project board for your repository:</p>
+            <div class="code-block">
+              <div class="code-block-header">
+                <span class="code-block-dot"></span>
+                <span class="code-block-dot"></span>
+                <span class="code-block-dot"></span>
+              </div>
+              <pre><code>curl -sL https://raw.githubusercontent.com/kbidne/LeanVibes/main/scripts/setup-backlog.sh | bash</code></pre>
+              <button class="copy-btn" aria-label="Copy to clipboard">Copy</button>
+            </div>
+          </div>
+
+          <!-- Install Config -->
+          <div class="start-step">
+            <h3>
+              <span class="step-number">3</span>
+              Install your tool config
+            </h3>
+            <p>Copy the configuration files for your preferred AI coding assistant. See the <a href="#setup">tool setup section</a> above for instructions.</p>
+          </div>
+        </div>
+
+        <div class="start-cta">
+          <p style="margin: 0 auto 1.5rem; font-size: var(--text-lg);">Want to try it risk-free first?</p>
+          <a href="https://github.com/kbidne/LeanVibes/tree/main/example" class="btn btn-secondary" target="_blank" rel="noopener">Try the Example Project &rarr;</a>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ====== Footer ====== -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-brand">
+        <svg viewBox="0 0 1200 1200" fill="currentColor">
+          <path d="m920.21 1066.9c-65.766 12.469-126.47 13.125-200.21 13.781-14.766 0.14062-30 0.28125-45.891 0.51562-112.97 1.6875-171 41.719-198.61 71.109-45-10.125-87.984-25.547-128.26-45.656 33-30.844 125.81-90.188 351.1-88.875 124.97 0.9375 228.1-9.7031 308.63-24.188-26.344 27.188-55.406 51.844-86.766 73.312zm120.32-111c-81.469 17.578-195.24 32.625-341.9 31.406-249.89-2.3906-346.97 68.953-379.6 104.16-29.719-17.016-57.75-36.562-83.812-58.5 41.812-34.406 156.98-113.48 342.74-123.1 77.297-3.9844 148.92-1.4062 218.21 1.0312 105.75 3.75 201.24 7.0781 287.06-15.047-12.984 20.953-27.234 41.016-42.703 60.047zm-1008-357.1c0-34.172 3.1875-67.594 9-100.12l522.47-58.219c3.9375 12.188 9.4688 23.719 16.5 34.125l-541.36 210.94c-4.3125-28.266-6.6094-57.234-6.6094-86.719zm1134.8 0c0 32.062-2.8125 63.469-7.9219 94.125l-376.69-193.22c9.8906-8.8594 18.422-19.125 25.359-30.469l357.42 86.297c1.0781 14.297 1.8281 28.688 1.8281 43.266zm-545.9-84.984c8.9531 5.5781 18.609 10.172 28.781 13.547-14.25 36-48.938 123.79-64.406 163.4-32.25-6.2812-65.016-12.141-98.484-16.781-9.0938-1.2656-18.094-2.25-27-3.0938 33.281-33.234 117.56-117.05 161.11-157.08zm122.86 211.03c-14.25-51.656-42-152.44-52.5-190.64 0.28125 0 0.5625 0.046875 0.89062 0.046875 11.531 0 22.594-1.5938 33.281-4.3125l307.97 233.9c-95.344 1.6406-190.92-17.203-289.64-39zm82.969-314.48c0.28125-3.7031 0.5625-7.4531 0.5625-11.25 0-4.5-0.23438-8.9062-0.65625-13.266l262.69-72.797c17.438 29.766 32.25 61.172 44.109 94.031zm-123.74-145.82-52.031-230.72c62.906 5.7188 122.86 21.75 178.18 46.359l-96.891 189.84c-9.3281-2.8594-19.172-4.6875-29.25-5.4844zm-63.047 9.9375c-16.266 6.8438-30.938 16.734-43.266 29.016l-286.74-192.47c65.484-39 139.4-65.109 218.34-75.047zm-157.36 429.71c75.844 10.5 148.78 26.812 219.32 42.562 148.08 33.141 288.56 64.359 433.5 37.781-1.2656 3.6562-2.4844 7.3594-3.7969 10.969-112.97 35.391-244.22 21.281-408.42 3.4688-55.594-6-113.06-12.281-175.13-17.156-213.89-16.875-379.6 73.031-435.47 108.23-19.312-32.109-35.438-66.328-48.141-102.14 52.312-29.25 220.03-111.14 418.13-83.719zm523.13-500.86-193.03 134.95c-7.8281-15.469-18.516-29.156-31.406-40.5l136.4-168.42c31.875 21.609 61.312 46.5 88.031 73.969zm-796.03-16.359 356.81 162.71c-3.4688 8.8125-6 18.094-7.5469 27.703l-460.26-45.094c29.016-54.328 66.656-103.31 111-145.31zm-80.625 728.9c52.969-32.906 214.22-119.81 416.63-103.69 61.641 4.875 118.88 11.109 174.24 17.062 156.61 17.016 283.87 30.703 396.84 2.1094-4.0312 8.8594-8.25 17.625-12.656 26.25-88.875 30.656-191.81 27.047-307.45 22.875-69.938-2.5312-142.26-5.1094-220.87-1.0312-200.63 10.359-321.94 96.844-364.26 132.89-30.891-28.969-58.641-61.266-82.453-96.469zm470.34 250.36c-29.719 0-58.922-2.3438-87.375-6.75 27.609-22.125 77.062-46.547 162-47.812 15.797-0.23438 30.984-0.375 45.703-0.51562 47.062-0.42188 89.719-0.89062 132.42-4.5469-76.172 38.062-162 59.625-252.74 59.625z"/>
+        </svg>
+        <span>MIT License</span>
+      </div>
+      <div class="footer-links">
+        <a href="https://github.com/kbidne/LeanVibes" target="_blank" rel="noopener">GitHub</a>
+        <a href="https://github.com/kbidne/LeanVibes#readme" target="_blank" rel="noopener">Documentation</a>
+        <a href="https://github.com/kbidne/LeanVibes/tree/main/example" target="_blank" rel="noopener">Example Project</a>
+      </div>
+      <span class="footer-tagline">Made for developers who ship.</span>
+    </div>
+  </footer>
+
+  <script src="./script.js"></script>
+</body>
+</html>

@@ -1,4 +1,10 @@
+<p align="center">
+  <img src="docs/logo.svg" alt="LeanVibes logo" width="120">
+</p>
+
 # LeanVibes
+
+> **[Visit the documentation site](https://kbidne.github.io/LeanVibes/)**
 
 A lightweight backlog management workflow for AI coding assistants + GitHub Projects. Create and manage GitHub Issues from your conversations with AI.
 
