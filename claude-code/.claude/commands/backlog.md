@@ -31,6 +31,7 @@ Review and work on backlog items from GitHub Issues.
 6. **Once an issue is selected**:
    - Fetch full issue details: `gh issue view [number] --json title,body,labels,comments`
    - Parse the acceptance criteria from the issue body
+   - Check the issue body for a `## Suggested Agent(s)` section. If present, it names specialized subagent type(s) (from this project's `.claude/agents/` or equivalent) that the issue's author intended to do parts of the work — use the Agent/Task tool to invoke the named agent(s) for their part rather than doing that part directly yourself. If the section is absent, proceed as a normal generic implementation session.
    - Create a TodoWrite plan based on the acceptance criteria
    - **Display the active issue reminder**:
      ```

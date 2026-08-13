@@ -113,6 +113,12 @@ When Claude creates backlog items, it uses this format:
 ## Context
 [Why this came up - conversation context, user request, or identified need]
 
+## Suggested Agent(s)
+[Optional - only when the project defines specialized subagent types
+(e.g. under `.claude/agents/`) AND the work clearly maps to one or more
+of them. Names each agent and which part of the work it owns. See
+"Suggested Agent(s) — Routing to Specialized Subagents" below.]
+
 ## Acceptance Criteria
 - [ ] [Specific, testable criterion]
 - [ ] [Another criterion]
@@ -124,6 +130,36 @@ When Claude creates backlog items, it uses this format:
 ---
 *Created via Claude Code backlog workflow*
 ```
+
+---
+
+## Suggested Agent(s) — Routing to Specialized Subagents
+
+If your project defines specialized subagent types (custom agents under
+`.claude/agents/`, each scoped to a particular kind of work — e.g. a
+read-only research agent vs. one that writes code and runs experiments),
+`/backlog`'s default flow has no way to know they exist: its instructions
+are agent-agnostic and just implement issues directly in a generic
+session.
+
+`/backlog-add`'s template includes an optional `## Suggested Agent(s)`
+section for exactly this. When the work an issue describes clearly maps
+to one of your project's subagent types, name it there — e.g.:
+
+```markdown
+## Suggested Agent(s)
+- `research-agent` (read-only, cites sources) for: investigating the
+  underlying question before implementation
+- `build-agent` (writes code, runs tests) for: implementing the change
+  and verifying it
+```
+
+`/backlog` checks for this section when an issue is picked up and, if
+present, uses the Agent/Task tool to invoke the named subagent(s) for
+their part of the work instead of doing it directly. Leave the section
+out entirely for ordinary issues — it's meant for the subset of work
+that genuinely benefits from a specialized agent, not as boilerplate on
+every issue.
 
 ---
 
@@ -241,6 +277,7 @@ cp -r /path/to/source/.claude .
 2. **Provide context** - Issue descriptions should be actionable without conversation history
 3. **Suggest priority** - Always recommend a priority level with reasoning
 4. **Link related items** - Reference existing issues when relevant
+5. **Route to specialized subagents when relevant** - If the project defines subagent types under `.claude/agents/` and an issue's work clearly maps to one, add a `## Suggested Agent(s)` section naming it (see "Suggested Agent(s) — Routing to Specialized Subagents" above). Skip it for ordinary issues.
 
 ---
 

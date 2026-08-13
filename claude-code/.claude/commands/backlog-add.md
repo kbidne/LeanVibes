@@ -37,6 +37,18 @@ Argument: $ARGUMENTS
    Added during Claude Code session.
    [If there's relevant context from the current conversation, include it]
 
+   ## Suggested Agent(s)
+   [OPTIONAL — only include this section if BOTH are true: (a) this
+   project defines specialized subagent types (check for a
+   `.claude/agents/` directory or subagent definitions in project
+   config), AND (b) the work clearly maps to one or more of them rather
+   than a generic implementation session. Omit the section entirely
+   otherwise — don't force it onto every issue. When included, name each
+   agent and which part of the work it owns, e.g.:
+   - `<agent-name>` (<what it's for>) for: [...]
+   `/backlog`'s default flow is agent-agnostic and won't know these
+   subagent types exist unless it's spelled out here.]
+
    ## Acceptance Criteria
    - [ ] [Criterion based on the title/context]
    - [ ] Verify implementation works as expected
