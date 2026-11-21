@@ -27,6 +27,14 @@ Every subcommand prints one JSON object on stdout.
         "ours".
     metrics-append FILE JSON
         Append one JSON line to FILE in the main repository's git dir.
+    metrics-show --pr M [--file FILE]
+        {"record": <the highest-run "run" line for PR M, or null>}
+    check lint|test --worktree W [--tests PATH ...]
+        Run review-loop.json's lint_commands, or its test_command with
+        {tests} replaced by the paths (empty: the whole suite), with W as the
+        working directory, so relative commands like .venv/bin/python resolve
+        inside it. {"ok", "results": [{"command", "exit", "output"}]}.
+        Exit 0 all passed, 4 one failed, 2 nothing configured.
     worktree find BRANCH
         {"path": <worktree with BRANCH checked out, or null>}
     worktree add NAME BRANCH [--start REF] [--link PATH ...]
@@ -40,8 +48,9 @@ Every subcommand prints one JSON object on stdout.
         Files changed both on origin/BASE and on W's HEAD since their
         merge base: {"merge_base", "files"}.
 
-Exit 0: done. Exit 3: lock held by someone else. Exit 1: a git command
-failed (stderr has its message). Exit 2: bad arguments.
+Exit 0: done. Exit 3: lock held by someone else. Exit 4: a check failed.
+Exit 1: a git command failed (stderr has its message). Exit 2: bad
+arguments or nothing configured.
 Standard library only, Python 3.8+.
 """
 from __future__ import annotations
@@ -50,6 +59,7 @@ import argparse
 import datetime as _dt
 import json
 import os
+import shlex
 import subprocess
 import sys
 from pathlib import Path
@@ -285,6 +295,54 @@ def overlap(base: str, worktree: Optional[str]) -> dict:
     return {"merge_base": mb, "files": sorted(theirs & ours)}
 
 
+# --- metrics and checks -----------------------------------------------------
+
+def metrics_show(pr: int, file: str) -> Optional[dict]:
+    path = git_dir(None, common=True) / Path(file).name
+    best = None
+    try:
+        lines = path.read_text().splitlines()
+    except FileNotFoundError:
+        return None
+    for line in lines:
+        try:
+            rec = json.loads(line)
+        except ValueError:
+            continue
+        if rec.get("type") == "run" and rec.get("pr") == pr and (
+                best is None or (rec.get("run") or 0) >= (best.get("run") or 0)):
+            best = rec
+    return best
+
+
+def load_config(worktree: str) -> dict:
+    for root in (Path(worktree), Path(main_checkout(worktree))):
+        path = root / ".claude" / "review-loop.json"
+        if path.is_file():
+            return json.loads(path.read_text())
+    return {}
+
+
+def check(kind: str, worktree: str, tests: List[str], tail: int = 4000):
+    cfg = load_config(worktree)
+    if kind == "lint":
+        commands = list(cfg.get("lint_commands") or [])
+    else:
+        cmd = cfg.get("test_command")
+        joined = " ".join(shlex.quote(t) for t in tests)
+        commands = [cmd.replace("{tests}", joined).strip()] if cmd else []
+    if not commands:
+        return 2, {"ok": False, "results": [],
+                   "reason": f"no {'lint_commands' if kind == 'lint' else 'test_command'} in review-loop.json"}
+    results = []
+    for cmd in commands:
+        proc = subprocess.run(cmd, shell=True, cwd=worktree, capture_output=True, text=True)
+        out = (proc.stdout + proc.stderr)[-tail:]
+        results.append({"command": cmd, "exit": proc.returncode, "output": out})
+    ok = all(r["exit"] == 0 for r in results)
+    return (0 if ok else 4), {"ok": ok, "worktree": worktree, "results": results}
+
+
 # --- cli --------------------------------------------------------------------
 
 def build_parser() -> argparse.ArgumentParser:
@@ -313,6 +371,15 @@ def build_parser() -> argparse.ArgumentParser:
     sp = sub.add_parser("metrics-append")
     sp.add_argument("file")
     sp.add_argument("json")
+
+    sp = sub.add_parser("metrics-show")
+    sp.add_argument("--pr", type=int, required=True)
+    sp.add_argument("--file", default="review-loop-metrics.jsonl")
+
+    sp = sub.add_parser("check")
+    sp.add_argument("kind", choices=["lint", "test"])
+    sp.add_argument("--worktree", required=True)
+    sp.add_argument("--tests", nargs="*", default=[])
 
     sp = sub.add_parser("worktree")
     wsub = sp.add_subparsers(dest="wcmd", required=True)
@@ -358,6 +425,12 @@ def main(argv: Optional[List[str]] = None) -> int:
             with open(target, "a") as f:
                 f.write(json.dumps(record, separators=(",", ":")) + "\n")
             emit({"appended": str(target)})
+        elif a.cmd == "metrics-show":
+            emit({"record": metrics_show(a.pr, a.file)})
+        elif a.cmd == "check":
+            code, out = check(a.kind, a.worktree, a.tests)
+            emit(out)
+            return code
         elif a.cmd == "worktree":
             if a.wcmd == "find":
                 emit({"path": worktree_find(a.branch)})

@@ -368,19 +368,25 @@ wrong output or crash), and `reachable_via` (file:line, or `null` if the
 reviewer found none). No scenario, no finding.
 
 **Which reviewer.** Use the `code-review` skill (`reviewer: "code-review"`).
-If the Skill tool reports it missing or disabled, use
+If the Skill tool reports it missing or disabled (`Unknown skill`), use
 `.claude/commands/review-fallback.md` with the same arguments
-(`reviewer: "fallback"`). Decide once, in round 1, record it, and use the same
-one for the closing review. If neither can run, stop: an empty or failed
+(`reviewer: "fallback"`). The reviewer agent is the one that sees that error,
+so its brief tells it to switch and to return `"reviewer"` naming the one it
+ran; record that value, never the one you asked for. Decide once, in round 1,
+and brief the closing review for the same one. If neither can run, stop: an empty or failed
 review is never a clean one, and the orchestrator never replaces a review by
 reading the diff itself.
 
 **Round 1: the whole PR, from a clean context.** Spawn a fresh agent
 (`general-purpose`, `model: opus`) whose whole brief is: invoke the Skill
-tool with skill `code-review` and args `high <N> --max-findings all` (or
-follow `review-fallback.md` with `high <N>`), then return every finding as
-`{"findings": [...]}` in the shape above, filling `reachable_via` from the
-code (read the callers). Drop nothing. **Give it nothing else**: no scope
+tool with skill `code-review` and args `high <N> --max-findings all`; if
+that reports an unknown or disabled skill, read and follow
+`<main>/.claude/commands/review-fallback.md` with `high <N>` instead. Then
+return every finding as `{"findings": [...], "reviewer":
+"code-review|fallback"}` in the shape above, filling `reachable_via` from the
+code (read the callers). Drop nothing. Run each shell step as one command
+with literal paths (no `cd ... &&`, no multi-line `-c`; write scratch
+scripts to a file). **Give it nothing else**: no scope
 statement, no account of the change. `/code-review` runs as a fork and
 inherits its caller's context; run from a session that wrote the PR, it would
 start anchored on the author's reasoning. Without `--max-findings all` it caps
@@ -392,7 +398,9 @@ round's `reviewed_head..fixed_head`, plus anything pushed since. Spawn a
 exactly: the PR number and the scope statement; `git diff <reviewed_head>..HEAD`
 to review and `git diff origin/<base>...HEAD` as context only; and the previous
 round's findings, one line each: `[category] path:line — summary —
-disposition (ref)`. Its instructions:
+disposition (ref)`; the worktree path, to use as `git -C <worktree> diff ...`
+(never `cd <worktree> && ...`: unattended runs deny it, and multi-line `-c`
+scripts too; write scratch scripts to a file and run that). Its instructions:
 
 1. For each previous finding marked `fixed`, check the fix removes the failure
    scenario. A fix that doesn't is a new finding: `[correctness] Fix for
@@ -476,6 +484,11 @@ If anything was fixed, the fixer then:
   project's test lock.
 - Runs every `lint_commands` entry (else the CI workflow's lint steps) and
   any gate scripts the CI workflow runs on changed files.
+- With `lint_commands` / `test_command` set, runs them through the script so
+  they execute inside the worktree (a relative `.venv/bin/python` then
+  resolves there, and no `cd` is needed):
+  `python3 .claude/scripts/workflow_state.py check lint --worktree <worktree>`
+  and `... check test --worktree <worktree> --tests <paths>`.
 - Adds or updates the changelog entry / docs the project requires if the fix
   changed what they describe.
 - Checks the budget: `git diff --numstat <reviewed_head>..HEAD`, excluding
@@ -491,7 +504,8 @@ If anything was fixed, the fixer then:
 ### 6. Check the fixer, post, file, wait for CI
 
 - **Don't trust the fixer's report.** Re-run the lint commands, gates and the
-  tests it names yourself on the pushed head. A failure here is part of this
+  tests it names yourself on the pushed head (`workflow_state.py check`, as
+  the fixer does). A failure here is part of this
   round: fix, commit, push.
 - **Spot-check every `rejected` blocking-category finding.** Read the cited
   evidence. If it doesn't show the scenario can't occur, the finding is

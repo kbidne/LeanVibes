@@ -162,6 +162,53 @@ class MetricsTests(RepoCase):
         self.assertFalse((self.main / "escape.jsonl").exists())
 
 
+class MetricsShowTests(RepoCase):
+    def test_highest_run_for_the_pr(self):
+        run(["metrics-append", "review-loop-metrics.jsonl", '{"type": "run", "run": 1, "pr": 3}'])
+        run(["metrics-append", "review-loop-metrics.jsonl", '{"type": "run", "run": 2, "pr": 3}'])
+        run(["metrics-append", "review-loop-metrics.jsonl", '{"type": "run", "run": 5, "pr": 4}'])
+        _, out = run(["metrics-show", "--pr", "3"])
+        self.assertEqual(out["record"]["run"], 2)
+        _, out = run(["metrics-show", "--pr", "9"])
+        self.assertIsNone(out["record"])
+
+    def test_no_file(self):
+        _, out = run(["metrics-show", "--pr", "1"])
+        self.assertIsNone(out["record"])
+
+
+class CheckTests(RepoCase):
+    def write_config(self, root, cfg):
+        (Path(root) / ".claude").mkdir(exist_ok=True)
+        (Path(root) / ".claude" / "review-loop.json").write_text(json.dumps(cfg))
+
+    def test_runs_in_the_worktree_and_fills_tests(self):
+        _, wt = run(["worktree", "add", "pr-3", "feature"])
+        self.write_config(self.main, {
+            "lint_commands": ["pwd", "test -f a.txt"],
+            "test_command": "echo ran {tests}"})
+        code, out = run(["check", "lint", "--worktree", wt["path"]])
+        self.assertEqual(code, 0)
+        self.assertEqual(out["results"][0]["output"].strip(), wt["path"])
+        code, out = run(["check", "test", "--worktree", wt["path"], "--tests", "tests/a b.py"])
+        self.assertEqual(out["results"][0]["output"].strip(), "ran tests/a b.py")
+        code, out = run(["check", "test", "--worktree", wt["path"]])
+        self.assertEqual(out["results"][0]["command"], "echo ran")
+
+    def test_worktree_config_wins_and_failure_exits_4(self):
+        _, wt = run(["worktree", "add", "pr-4", "feature"])
+        self.write_config(self.main, {"lint_commands": ["true"]})
+        self.write_config(wt["path"], {"lint_commands": ["true", "false"]})
+        code, out = run(["check", "lint", "--worktree", wt["path"]])
+        self.assertEqual(code, 4)
+        self.assertEqual([r["exit"] for r in out["results"]], [0, 1])
+
+    def test_nothing_configured(self):
+        code, out = run(["check", "test", "--worktree", str(self.main)])
+        self.assertEqual(code, 2)
+        self.assertIn("test_command", out["reason"])
+
+
 class WorktreeTests(RepoCase):
     def test_add_find_remove_with_links(self):
         code, out = run(["worktree", "add", "pr-5", "feature", "--link", ".venv", "--link", ".env"])
