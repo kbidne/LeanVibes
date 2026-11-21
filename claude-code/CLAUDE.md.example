@@ -2,12 +2,69 @@
 
 ## Backlog Workflow
 
-This project uses the LeanVibes backlog workflow.
+This project uses the LeanVibes backlog workflow (`/backlog`, `/backlog-add`).
 
-When identifying work that could be deferred, present a backlog suggestion box.
-Suggest adding to backlog when:
-- Work is tangential to the main task
-- It's an enhancement rather than a requirement
-- It would significantly expand scope
-- The user mentions "later" or "eventually"
-- You identify technical debt or optimization opportunities
+Issues are the **plan** (priority, epics, what is waiting on what). The PR
+and its tests are the **record**. A small fix filed instead of done loses the
+context the current session had, and the next session has to rediscover it.
+
+### Fix now or file? (default: fix now)
+
+Fix a defect (a bug, a broken doc or check) in this session, as its own PR
+from a worktree, when all of these hold:
+- The cause is confirmed (a failing test, a repro, or the code itself), not a hypothesis.
+- The fix is small and needs no decision from the owner.
+- It won't derail the session's own task. A side worktree and PR is fine; a multi-hour detour is not.
+
+File an issue (or present a backlog suggestion) instead when any of these hold:
+1. **Needs the owner**: a decision or a priority call.
+2. **Has to wait**: data accumulating, a soak, a date. Park it with a `waiting:*` label.
+3. **Spans several PRs**: epic or multi-step work.
+4. **The session is busy** with something that must finish first (a release, an incident).
+5. **The cause isn't understood yet**: record what's known vs. guessed.
+6. **Scope expansion or "later"**: features, enhancements or debt the user
+   deferred or didn't ask for. Suggest it; don't build it unasked.
+
+Before filing or opening a PR, check for an existing issue or PR on the same
+thing (`gh issue list --search "<terms>"`, `gh pr list --state open --search "<terms>"`).
+
+### Backlog suggestion format
+
+```
++----------------------------------------------------------+
+|  BACKLOG SUGGESTION                                      |
+|                                                          |
+|  "[description of the work]"                             |
+|                                                          |
+|  [which file-instead reason applies]                     |
+|                                                          |
+|  - Type: [feature/bug/enhancement/debt]                  |
+|  - Suggested Priority: [high/medium/low]                 |
+|                                                          |
+|  [do it] - Implement now                                 |
+|  [backlog] - Add to backlog                              |
+|  [backlog high/medium/low] - Add with priority           |
++----------------------------------------------------------+
+```
+
+### Concurrent sessions
+
+Never edit files in the main checkout when other AI sessions may be active.
+`/backlog` creates a per-issue worktree under `.claude/worktrees/` branched
+from the remote default branch; keep that directory in `.gitignore`.
+
+### Labels
+
+- **Priority:** `priority:high`, `priority:medium`, `priority:low`
+- **Type:** `type:feature`, `type:bug`, `type:enhancement`, `type:debt`
+- **Parked:** `waiting:date`, `waiting:decision`, `waiting:issue`, `waiting:external`,
+  each with a `Parked:` comment in the format in `/backlog` "Parking an issue"
+- **Structure:** `epic` (tracking issue), `stays open` (kept open on purpose, not a work item)
+- `backlog` only records that a command filed the issue; `/backlog` lists every open issue.
+
+### Commit / PR linking
+
+- Commits include `Fixes #N` in the body; PRs include `Closes #N` in the description.
+- For an issue that must stay open across several PRs, use `Refs #N` and keep
+  `fix: #N` out of the PR title: GitHub closes issues from the squash commit's
+  title too.

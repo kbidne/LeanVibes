@@ -2,24 +2,31 @@
 
 This project uses the LeanVibes backlog workflow with GitHub Issues and Projects.
 
-## Proactive Backlog Suggestions
+## Fix Now or File? (default: fix now)
 
-When identifying work that could be deferred, present a backlog suggestion box.
-Suggest adding to backlog when:
-- Work is tangential to the main task
-- It's an enhancement rather than a requirement
-- It would significantly expand scope
-- The user mentions "later" or "eventually"
-- You identify technical debt or optimization opportunities
+Fix a defect (a bug, a broken doc or check) in this session, as its own PR,
+when all of these hold:
+- The cause is confirmed (a failing test, a repro, or the code itself), not a hypothesis.
+- The fix is small and needs no decision from the owner.
+- It won't derail the current task.
 
-When suggesting, use this format:
+Present a backlog suggestion instead when any of these hold:
+- It needs the owner's decision or a priority call
+- It has to wait (a date, data accumulating) - park it with a `waiting:*` label
+- It spans several PRs
+- The current task must finish first
+- The cause isn't understood yet - record what's known vs. guessed
+- It is scope expansion: work tangential to the task, an enhancement rather than
+  a requirement, technical debt, or something the user said to do "later"
+
+Suggestion format:
 ```
 +----------------------------------------------------------+
 |  BACKLOG SUGGESTION                                      |
 |                                                          |
 |  "[Brief description of the work]"                       |
 |                                                          |
-|  [Why this could be deferred]                            |
+|  [Why this should be filed, not done now]                |
 |                                                          |
 |  - Type: [feature/bug/enhancement/debt]                  |
 |  - Suggested Priority: [high/medium/low]                 |
@@ -33,7 +40,8 @@ When suggesting, use this format:
 
 ## Adding to Backlog
 
-When user says "backlog" or "add to backlog", create a GitHub Issue:
+When user says "backlog" or "add to backlog", first check for an existing issue
+(`gh issue list --search "<terms>"`), then create a GitHub Issue:
 
 ```bash
 gh issue create \
@@ -42,7 +50,12 @@ gh issue create \
 [Description]
 
 ## Context
-Added during Cursor session.
+Added during Cursor session. [What was seen, where (file paths), known vs. guessed]
+
+Introduced by: PR #[N]   <- bugs only: the PR that caused it, or 'unknown'
+
+## Why now
+[Optional: what it risks or blocks; omit if nothing to say]
 
 ## Acceptance Criteria
 - [ ] [Criteria based on the work]
@@ -56,18 +69,64 @@ Added during Cursor session.
   --label "type:[feature/bug/enhancement/debt]"
 ```
 
-Then add to project board:
+Then add to the project board:
 ```bash
-PROJECT_NUM=$(gh project list --owner @me --format json 2>/dev/null | grep -o '"number":[0-9]*' | head -1 | cut -d: -f2)
-gh project item-add $PROJECT_NUM --owner @me --url [issue URL]
+PROJECT_NUM=$(gh project list --owner @me --format json 2>/dev/null | jq -r '[.projects[] | select(.title=="Backlog") | .number] | first // empty')
+[ -n "$PROJECT_NUM" ] && gh project item-add "$PROJECT_NUM" --owner @me --url [issue URL]
 ```
+
+## Viewing Backlog
+
+When user asks to see the backlog, list **every** open issue (the `backlog` label
+only records which tool filed it; don't filter on it):
+
+```bash
+gh issue list --state open --limit 500 --json number,title,labels,body
+```
+
+If exactly 500 come back, say the list may be cut off.
+
+Group each issue into the first match:
+1. **Parked**: any `waiting:*` label, or `stays open`
+2. **Epics**: label `epic`
+3. **Workable**: everything else, shown by priority (high, medium, low, unprioritized)
+
+For `waiting:date` and `waiting:issue` issues, read the first line of the latest
+comment that starts with `Parked:`. Show as **due** a `Parked: waiting:date until YYYY-MM-DD`
+whose date has passed, and as **may be unblocked** a `Parked: waiting:issue on #N`
+whose #N is closed. Recommend work from Workable and due issues only.
+
+## Parking an Issue
+
+When an issue can't move until something outside the work changes, add one label
+and a comment whose first line has this exact format:
+
+| Label | First line of the comment |
+|---|---|
+| `waiting:date` | `Parked: waiting:date until YYYY-MM-DD` |
+| `waiting:decision` | `Parked: waiting:decision` (question on the next line) |
+| `waiting:issue` | `Parked: waiting:issue on #N` |
+| `waiting:external` | `Parked: waiting:external` (who and what on the next line) |
+
+Remove the label when the wait ends. Don't park an issue just because it's large.
 
 ## Working on Backlog Items
 
-When user asks to work on a backlog item, fetch and display it:
+When user asks to work on an issue, fetch it with its recent comments:
 
 ```bash
 gh issue view [number] --json title,body,labels,comments
+```
+
+If it has a `waiting:*` label, say what it is waiting on and confirm before starting.
+If it is `stays open` or `epic`, ask which specific task under it to do.
+
+Before editing files, if other AI sessions may be active, work in a per-issue
+worktree branched from the remote default branch (never from the current HEAD):
+
+```bash
+git fetch origin
+git worktree add .claude/worktrees/[number] -b fix/[number]-[slug] origin/main
 ```
 
 Display:
@@ -88,18 +147,15 @@ Fixes #[number]
 
 ## Pull Requests
 
-When creating PRs for backlog items, include in the description:
+Before opening a PR: keep it under ~600 added lines outside tests/docs (split
+otherwise), and run the CI workflow's lint/test steps locally.
+
+Include in the description:
 
 ```
 Closes #[number]
 ```
 
-## Viewing Backlog
-
-When user asks to see backlog, run:
-
-```bash
-gh issue list --label backlog --state open --json number,title,labels --limit 50
-```
-
-Display organized by priority (high, medium, low, unprioritized).
+For an issue that must stay open across several PRs, use `Refs #[number]` and keep
+`fix: #[number]` out of the PR title - GitHub closes issues from the squash commit's
+title too.

@@ -23,8 +23,10 @@ A lightweight backlog management workflow for AI coding assistants + GitHub Proj
 ## Core Features
 
 - **Quick Issue Creation** - Add items to backlog without leaving your AI assistant
-- **Proactive Suggestions** - AI identifies deferrable work during conversations
+- **Fix Now or File** - AI fixes small, confirmed defects on the spot and suggests filing the rest
 - **Priority-Based Organization** - High, medium, low priority labels
+- **Parking** - `waiting:*` labels park blocked issues; `/backlog` resurfaces them when they come due
+- **Per-Issue Worktrees** - Parallel AI sessions each work in their own git worktree
 - **GitHub Projects Integration** - Visual board for tracking progress
 - **Automatic Issue Linking** - Commits and PRs auto-reference the issue being worked on
 
@@ -32,7 +34,7 @@ A lightweight backlog management workflow for AI coding assistants + GitHub Proj
 
 1. **Setup** - Run the shared setup script to create labels and project board
 2. **Add Items** - Use tool-specific commands to add backlog items
-3. **Work on Items** - Pull items from backlog, AI tracks the issue
+3. **Work on Items** - Pull items from backlog; AI works in a per-issue worktree and tracks the issue
 4. **Auto-Link** - Commits include `Fixes #X`, PRs include `Closes #X`
 5. **Auto-Close** - Issues close automatically when code merges
 
@@ -65,7 +67,7 @@ git clone https://github.com/kbidne/LeanVibes.git
 ./LeanVibes/scripts/setup-backlog.sh
 ```
 
-This creates labels in your repo and a "Backlog" project board.
+This creates labels in your repo and a "Backlog" project board. It is safe to re-run: existing labels get their color and description updated, so re-running is how an older install picks up new labels.
 
 > **Note:** GitHub Projects (v2) are owned by users or organizations, not individual repositories. The setup script creates a user-level project that can include issues from any of your repos.
 
@@ -85,7 +87,7 @@ New to LeanVibes? Check out the **[example project](example/)** - a fake auth sy
 
 | Label | Color | Purpose |
 |-------|-------|---------|
-| `backlog` | Green | Identifies all backlog items |
+| `backlog` | Green | Provenance only: filed by a LeanVibes command (`/backlog` lists every open issue) |
 | `priority:high` | Red | Urgent / blocking items |
 | `priority:medium` | Yellow | Important but not urgent |
 | `priority:low` | Blue | Nice to have / future work |
@@ -93,6 +95,14 @@ New to LeanVibes? Check out the **[example project](example/)** - a fake auth sy
 | `type:bug` | Red | Defects to fix |
 | `type:enhancement` | Purple | Improvements to existing features |
 | `type:debt` | Tan | Technical debt / refactoring |
+| `waiting:date` | Light blue | Parked until a date passes or a sample size is reached |
+| `waiting:decision` | Light blue | Parked until the owner makes a named decision |
+| `waiting:issue` | Light blue | Parked until another open issue lands |
+| `waiting:external` | Light blue | Parked on a vendor, third party or outside demand |
+| `epic` | Indigo | Tracking issue grouping related work items |
+| `stays open` | Pale blue | Kept open on purpose (tracker); not a work item |
+
+Each `waiting:*` label is paired with a comment whose first line is `Parked: waiting:date until YYYY-MM-DD` (or `Parked: waiting:decision`, `Parked: waiting:issue on #N`, `Parked: waiting:external`). That is how `/backlog` knows when a parked issue is due.
 
 ## Contributing
 

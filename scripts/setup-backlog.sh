@@ -1,12 +1,15 @@
 #!/bin/bash
 
-# Claude Code + GitHub Projects Backlog Setup Script
-# Run this once per repository to set up labels and project board
+# LeanVibes backlog setup script
+# Run once per repository to create labels and the "Backlog" project board.
+# Safe to re-run: existing labels get their color and description updated.
 
 set -e
 
+PROJECT_TITLE="Backlog"
+
 echo "========================================"
-echo "  Backlog Workflow Setup"
+echo "  LeanVibes Backlog Setup"
 echo "========================================"
 echo ""
 
@@ -47,20 +50,33 @@ echo ""
 
 echo "Creating labels..."
 
+EXISTING_LABELS=$(gh label list --limit 500 --json name -q '.[].name')
+LABEL_FAILURES=0
+
 create_label() {
     local name=$1
     local color=$2
     local description=$3
+    local verb="Created"
+    local err
 
-    if gh label create "$name" --color "$color" --description "$description" 2>/dev/null; then
-        echo "  + Created: $name"
+    if printf '%s\n' "$EXISTING_LABELS" | grep -Fxq "$name"; then
+        verb="Updated"
+    fi
+
+    # --force updates color/description on a label that already exists, so a
+    # re-run brings an old install up to date. A real failure (auth, network,
+    # permissions) is reported, not mistaken for "already exists".
+    if err=$(gh label create "$name" --color "$color" --description "$description" --force 2>&1); then
+        echo "  + $verb: $name"
     else
-        echo "  - Exists:  $name"
+        echo "  ! Failed:  $name ($err)"
+        LABEL_FAILURES=$((LABEL_FAILURES + 1))
     fi
 }
 
-# Backlog identifier
-create_label "backlog" "0E8A16" "Backlog item managed by Claude Code"
+# Provenance (nothing filters on it; /backlog lists every open issue)
+create_label "backlog" "0E8A16" "Filed by a LeanVibes command (provenance only; /backlog lists every open issue)"
 
 # Priority labels
 create_label "priority:high" "D73A4A" "High priority - address this week"
@@ -73,7 +89,22 @@ create_label "type:bug" "D73A4A" "Bug or defect"
 create_label "type:enhancement" "7057FF" "Enhancement to existing feature"
 create_label "type:debt" "FEF2C0" "Technical debt or refactoring"
 
+# Parked labels (each paired with a "Parked:" comment; see /backlog "Parking an issue")
+create_label "waiting:date" "C5DEF5" "Parked until a date passes or a sample size is reached; the issue says when"
+create_label "waiting:decision" "C5DEF5" "Parked until the owner makes a decision the issue names"
+create_label "waiting:issue" "C5DEF5" "Parked until another open issue lands"
+create_label "waiting:external" "C5DEF5" "Parked on a vendor, third party, or outside demand"
+
+# Structure labels
+create_label "epic" "3E4B9E" "Tracking issue grouping related work items"
+create_label "stays open" "BFD4F2" "Kept open on purpose (tracker or owner's call); not a work item to pick up"
+
 echo ""
+
+if [ "$LABEL_FAILURES" -gt 0 ]; then
+    echo "  ! $LABEL_FAILURES label(s) failed. Check 'gh auth status' and that you can write to $REPO."
+    echo ""
+fi
 
 # ========================================
 # Create Project Board
@@ -81,8 +112,15 @@ echo ""
 
 echo "Setting up project board..."
 
-# Check if we have the project scope
-if ! gh project list --owner @me &>/dev/null; then
+find_project_number() {
+    gh project list --owner @me --format json 2>/dev/null \
+        | jq -r --arg t "$PROJECT_TITLE" '[.projects[] | select(.title == $t) | .number] | first // empty'
+}
+
+if ! command -v jq &> /dev/null; then
+    echo "  ! jq is not installed; skipping project board setup."
+    echo "    Install it with: brew install jq"
+elif ! gh project list --owner @me &>/dev/null; then
     echo "  ! Missing 'project' scope for GitHub CLI"
     echo ""
     echo "  To enable project board integration, run:"
@@ -90,26 +128,22 @@ if ! gh project list --owner @me &>/dev/null; then
     echo ""
     echo "  Then re-run this script."
 else
-    # Check if project exists
-    PROJECT_EXISTS=$(gh project list --owner @me --format json 2>/dev/null | grep -c '"title":"Backlog"' || true)
+    OWNER=$(gh api user --jq '.login' 2>/dev/null)
+    PROJECT_NUM=$(find_project_number)
 
-    if [ "$PROJECT_EXISTS" -gt 0 ]; then
-        echo "  - Project 'Backlog' already exists"
+    if [ -n "$PROJECT_NUM" ]; then
+        echo "  - Project '$PROJECT_TITLE' already exists"
+    elif gh project create --owner @me --title "$PROJECT_TITLE" >/dev/null 2>&1; then
+        echo "  + Created project: $PROJECT_TITLE"
+        PROJECT_NUM=$(find_project_number)
     else
-        # Create the project - check exit code, not output
-        if gh project create --owner @me --title "Backlog" 2>/dev/null; then
-            echo "  + Created project: Backlog"
+        echo "  ! Could not create project (may require manual setup)"
+        echo "    Visit: https://github.com/$OWNER?tab=projects"
+    fi
 
-            # Get the project URL
-            PROJECT_NUM=$(gh project list --owner @me --format json 2>/dev/null | grep -o '"number":[0-9]*' | head -1 | cut -d: -f2)
-            if [ -n "$PROJECT_NUM" ]; then
-                OWNER=$(gh api user --jq '.login' 2>/dev/null)
-                echo "    URL: https://github.com/users/$OWNER/projects/$PROJECT_NUM"
-            fi
-        else
-            echo "  ! Could not create project (may require manual setup)"
-            echo "    Visit: https://github.com/$REPO/projects"
-        fi
+    if [ -n "$PROJECT_NUM" ]; then
+        PROJECT_URL="https://github.com/users/$OWNER/projects/$PROJECT_NUM"
+        echo "    URL: $PROJECT_URL"
     fi
 fi
 
@@ -123,16 +157,20 @@ echo "========================================"
 echo "  Setup Complete!"
 echo "========================================"
 echo ""
-echo "Labels created:"
-echo "  - backlog"
+echo "Labels:"
+echo "  - backlog (provenance only)"
 echo "  - priority:high, priority:medium, priority:low"
 echo "  - type:feature, type:bug, type:enhancement, type:debt"
+echo "  - waiting:date, waiting:decision, waiting:issue, waiting:external"
+echo "  - epic, stays open"
 echo ""
 echo "Next steps:"
-echo "  1. Add the backlog section to your CLAUDE.md"
-echo "  2. Start using /backlog and /backlog-add commands"
-echo "  3. Optionally configure project board columns at:"
-echo "     https://github.com/$REPO/projects"
+echo "  1. Add the backlog section to your CLAUDE.md (or .cursorrules)"
+echo "  2. Add '.claude/worktrees/' to your .gitignore"
+echo "  3. Start using /backlog and /backlog-add"
+if [ -n "${PROJECT_URL:-}" ]; then
+    echo "  4. Optionally configure board columns at: $PROJECT_URL"
+fi
 echo ""
-echo "Documentation: .claude/BACKLOG_WORKFLOW.md"
+echo "Documentation: https://github.com/kbidne/LeanVibes"
 echo ""
