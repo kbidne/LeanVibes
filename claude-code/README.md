@@ -98,6 +98,19 @@ The loop ends in one of two verdicts: **`ready`** (merged unless `--no-merge`) o
 
 Reviewers are fresh Opus agents running Claude Code's `/code-review`; where that skill is unavailable, `/review-fallback` stands in. Optional per-project settings (risky paths, lint and test commands, budgets) go in `.claude/review-loop.json`; copy `review-loop.json.example`. `.claude/scripts/review_loop_policy.py` applies the path rules, and `.claude/scripts/workflow_state.py` runs the lock, worktree and metrics steps as single commands so they work under a permission allowlist (both standard-library Python 3.8+).
 
+### `/backlog-sprint` - Work the Backlog in a Batch
+
+```
+/backlog-sprint                    # triage, approve the queue once, then work up to 3 items
+/backlog-sprint --max-prs 5        # work up to 5
+/backlog-sprint --issue 42         # one issue, no triage
+/backlog-sprint --new              # abandon an unfinished sprint and start over
+```
+
+Triage (`.claude/scripts/backlog_sprint_triage.py`) orders eligible issues by value per review round: due dates first, then issues citing a `risky_paths` file with evidence (`Introduced by: PR #N`, an evidence label), then one signal, then the rest. It skips parked issues, epics, features, issues without an acceptance-criteria checklist, issues another session owns, and **follow-ups of follow-ups**: those are grouped by root issue for a **design pass**, one note on the root that retires several follow-ups at once. Low-priority loop-filed issues with no value signal aren't queued, and when nothing in the queue has any signal it recommends an empty sprint.
+
+For each approved item an implementer agent follows `/backlog` in its own worktree and opens a PR; then the sprint runs `/review-loop` on it in the same session. The report leads with the decisions waiting on you, then each PR's verdict and cost, and how many issues the loops filed against how many the sprint closed.
+
 ## Parking Issues
 
 An issue that can't move yet gets one `waiting:*` label and a comment whose first line says what it's waiting for:
@@ -148,10 +161,12 @@ your-project/
     ├── commands/
     │   ├── backlog.md            # /backlog command
     │   ├── backlog-add.md        # /backlog-add command
+    │   ├── backlog-sprint.md     # /backlog-sprint command
     │   ├── review-loop.md        # /review-loop command
     │   └── review-fallback.md    # reviewer used when /code-review is unavailable
     ├── scripts/
     │   ├── review_loop_policy.py # risky / always-ask path rules
+    │   ├── backlog_sprint_triage.py # sprint triage
     │   └── workflow_state.py     # locks, worktrees, metrics: one command per step
     ├── review-loop.json          # optional, from review-loop.json.example
     └── worktrees/                # Per-issue and per-PR worktrees (gitignored)

@@ -29,6 +29,7 @@ A lightweight backlog management workflow for AI coding assistants + GitHub Proj
 - **Per-Issue Worktrees** - Parallel AI sessions each work in their own git worktree
 - **GitHub Projects Integration** - Visual board for tracking progress
 - **Automatic Issue Linking** - Commits and PRs auto-reference the issue being worked on
+- **Backlog Sprint** *(Claude Code)* - `/backlog-sprint` triages the backlog by value, you approve the queue once, then it builds each fix and runs `/review-loop` on it
 - **Review Loop** *(Claude Code)* - `/review-loop <PR>` reviews, fixes, re-reviews and merges a PR, ending in a verdict instead of an endless "until zero findings"
 
 ## How It Works
@@ -120,6 +121,15 @@ curl -sL https://raw.githubusercontent.com/kbidne/LeanVibes/main/scripts/setup-b
 | `review:decision-needed` | Stopped on a question for a human |
 | `review:chain` | A chain of loop-filed follow-ups; needs a design pass on the root issue |
 | `review:ledger` | The issue that collects non-blocking review notes |
+
+### Sprint labels (optional)
+
+Created with `--sprint` (which implies `--review-loop`):
+
+| Label | Purpose |
+|-------|---------|
+| `sprint:keep` | Queue a low-priority loop-filed issue despite the value floor |
+| `design:patch-separately` | A design note says to patch this chain follow-up on its own |
 
 ## Contributing
 
