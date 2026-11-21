@@ -80,6 +80,17 @@ When Claude identifies work that could be deferred, it will prompt:
 /backlog suggest      # Get Claude's recommendation (workable and due issues only)
 ```
 
+#### `/backlog-sprint` - Work the Backlog in a Batch
+
+```
+/backlog-sprint              # triage, approve the queue once, work up to 3 items
+/backlog-sprint --issue 42   # one issue, no triage
+```
+
+Each item: an implementer agent follows `/backlog` and opens a PR, then the
+sprint runs `/review-loop` on it. Chains of loop-filed follow-ups get a design
+note on their root instead of more patches.
+
 #### `/review-loop` - Review, Fix, Re-review, Merge
 
 ```
@@ -248,10 +259,12 @@ your-repo/
 │   ├── commands/
 │   │   ├── backlog.md          # /backlog command
 │   │   ├── backlog-add.md      # /backlog-add command
+│   │   ├── backlog-sprint.md   # /backlog-sprint command
 │   │   ├── review-loop.md      # /review-loop command
 │   │   └── review-fallback.md  # fallback reviewer
 │   ├── scripts/
 │   │   ├── review_loop_policy.py
+│   │   ├── backlog_sprint_triage.py
 │   │   └── workflow_state.py
 │   ├── worktrees/              # Per-issue worktrees (gitignored)
 │   └── BACKLOG_WORKFLOW.md     # This documentation
@@ -331,7 +344,6 @@ Ensure you're in the correct repository and the project name matches exactly.
 ## Contributing
 
 This workflow is open for improvements. Key areas:
-- [ ] Sprint runner over the backlog
 - [ ] Milestone/sprint integration
 - [ ] Automated priority aging
 - [ ] Cross-repo backlog views

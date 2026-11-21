@@ -8,13 +8,16 @@ set -e
 
 PROJECT_TITLE="Backlog"
 WITH_REVIEW_LOOP=0
+WITH_SPRINT=0
 
 for arg in "$@"; do
     case "$arg" in
         --review-loop) WITH_REVIEW_LOOP=1 ;;
+        --sprint) WITH_SPRINT=1; WITH_REVIEW_LOOP=1 ;;
         -h|--help)
-            echo "Usage: setup-backlog.sh [--review-loop]"
+            echo "Usage: setup-backlog.sh [--review-loop] [--sprint]"
             echo "  --review-loop   also create the review:* labels used by /review-loop"
+            echo "  --sprint        also create the labels used by /backlog-sprint (implies --review-loop)"
             exit 0 ;;
         *) echo "Unknown option: $arg (try --help)"; exit 1 ;;
     esac
@@ -119,6 +122,12 @@ if [ "$WITH_REVIEW_LOOP" -eq 1 ]; then
     create_label "review:ledger" "C2E0C6" "Collects /review-loop's non-blocking notes"
 fi
 
+# Sprint labels (opt-in)
+if [ "$WITH_SPRINT" -eq 1 ]; then
+    create_label "sprint:keep" "BFDADC" "Queue a low-priority loop-filed issue despite the /backlog-sprint value floor"
+    create_label "design:patch-separately" "D4C5F9" "A design note says patch this follow-up on its own; /backlog-sprint treats it as depth 1"
+fi
+
 echo ""
 
 if [ "$LABEL_FAILURES" -gt 0 ]; then
@@ -185,6 +194,9 @@ echo "  - waiting:date, waiting:decision, waiting:issue, waiting:external"
 echo "  - epic, stays open"
 if [ "$WITH_REVIEW_LOOP" -eq 1 ]; then
     echo "  - review:ready, review:decision-needed, review:chain, review:ledger"
+fi
+if [ "$WITH_SPRINT" -eq 1 ]; then
+    echo "  - sprint:keep, design:patch-separately"
 fi
 echo ""
 echo "Next steps:"
