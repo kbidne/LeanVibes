@@ -21,7 +21,9 @@ Get comfortable with:
 - Adding backlog items quickly
 - Pulling items from backlog to work on
 - Recognizing when AI suggests deferring work
+- Parking items that can't move yet (`waiting:*` labels)
 - Committing with issue references
+- Reviewing and merging a PR with `/review-loop` (Claude Code)
 - Watching issues auto-close
 
 ## Tips
@@ -30,3 +32,4 @@ Get comfortable with:
 - Focus on the workflow, not the code
 - Try scope creep - mention "we should also add X" and see what happens
 - Practice saying "backlog" or "backlog medium" when suggestions appear
+- Park something ("park the remember-me issue until we decide on session length") and watch `/backlog` list it under Parked

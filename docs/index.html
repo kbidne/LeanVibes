@@ -195,6 +195,49 @@
             <h3>One-Script Setup</h3>
             <p>A single bash command creates labels and a project board. Safe to re-run: it updates existing labels, so older installs pick up new ones.</p>
           </div>
+
+          <!-- Review Loop -->
+          <div class="card feature-card">
+            <div class="feature-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 12a9 9 0 1 1-3-6.7" />
+                <polyline points="21 3 21 9 15 9" />
+                <polyline points="8 12 11 15 16 10" />
+              </svg>
+            </div>
+            <h3>Review Loop</h3>
+            <p><code>/review-loop 42</code> reviews a PR, fixes only reachable blocking findings, re-reviews each fix, and merges once the head is verified and CI is green. Non-blocking notes go to one ledger issue. Claude Code.</p>
+          </div>
+
+          <!-- Backlog Sprint -->
+          <div class="card feature-card">
+            <div class="feature-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="8" y1="6" x2="21" y2="6" />
+                <line x1="8" y1="12" x2="21" y2="12" />
+                <line x1="8" y1="18" x2="21" y2="18" />
+                <polyline points="3 6 4 7 6 5" />
+                <polyline points="3 12 4 13 6 11" />
+                <polyline points="3 18 4 19 6 17" />
+              </svg>
+            </div>
+            <h3>Backlog Sprints</h3>
+            <p><code>/backlog-sprint</code> triages the backlog, you approve the queue once, then each issue gets a PR and a review loop. Follow-ups of follow-ups get one design note instead of more patches. Claude Code.</p>
+          </div>
+
+          <!-- Escape Tracking -->
+          <div class="card feature-card">
+            <div class="feature-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="7" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                <line x1="11" y1="8" x2="11" y2="11" />
+                <line x1="11" y1="14" x2="11.01" y2="14" />
+              </svg>
+            </div>
+            <h3>Escape Tracking</h3>
+            <p>A bug filed against merged work names the PR that introduced it (<code>Introduced by: PR #N</code>), so you can count what got past review, not just what review found.</p>
+          </div>
         </div>
       </div>
     </section>
@@ -331,7 +374,7 @@
               <pre><code>cp -r claude-code/.claude/ your-project/</code></pre>
               <button class="copy-btn" aria-label="Copy to clipboard">Copy</button>
             </div>
-            <p>Use <code>/backlog</code> and <code>/backlog-add</code> slash commands directly in your conversation.</p>
+            <p>Use <code>/backlog</code> and <code>/backlog-add</code> slash commands directly in your conversation, <code>/review-loop &lt;PR&gt;</code> to review, fix and merge a PR, and <code>/backlog-sprint</code> to work several issues in one batch.</p>
             <a href="https://github.com/kbidne/LeanVibes/tree/main/claude-code" class="card-link" target="_blank" rel="noopener">View Claude Code docs &rarr;</a>
           </div>
 

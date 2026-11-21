@@ -80,6 +80,38 @@ Add signup page with email and password fields
 Fixes #1
 ```
 
+### Step 6: Park an Item That Can't Move Yet
+
+The "Remember me" checkbox needs a decision first: how long should the
+session last? Park it instead of leaving it in the queue:
+
+> "Park the remember-me issue until we decide on session length."
+
+The AI adds the `waiting:decision` label and a comment whose first line is
+`Parked: waiting:decision`, with the question on the next line. Run
+`/backlog` again: the item has moved from **Workable** to **Parked**. Remove
+the label once you've decided, and it's workable again. (Other parking
+labels: `waiting:date` with `until YYYY-MM-DD`, `waiting:issue on #N`,
+`waiting:external`.)
+
+### Step 7: Review and Merge the PR (Claude Code)
+
+Once the signup PR is open, run the review loop on it (run the setup script
+with `--review-loop` first, or let the command create its labels):
+
+```
+/review-loop 7
+```
+
+It reviews the whole PR, fixes only blocking findings that something can
+actually reach (a missing test for the fix counts), re-reviews each fix, and
+posts one status comment. Non-blocking notes go to a single "Review-loop
+ledger" issue instead of new backlog items. It ends with a verdict:
+`ready` (merged once CI is green) or `decision_needed` (questions for you).
+
+With several items workable, `/backlog-sprint` does Steps 3-7 for each in
+one batch, after you approve the queue once.
+
 ---
 
 ## Stretch Goals (Perfect for Backlog Practice)
@@ -107,6 +139,8 @@ This is a fake project - you don't need to actually build anything! The goal is 
 2. Working on items from the backlog
 3. Seeing proactive suggestions when scope creeps
 4. Committing with proper issue references
-5. Watching issues auto-close
+5. Parking items that are blocked on a decision, a date or another issue
+6. Reviewing and merging a PR with `/review-loop` (Claude Code)
+7. Watching issues auto-close
 
 Feel free to modify this requirements file or create your own project to practice with.
