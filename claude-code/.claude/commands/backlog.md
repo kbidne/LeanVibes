@@ -112,25 +112,34 @@ Argument: $ARGUMENTS
    directory, so a `git stash`, `git checkout --` or plain edit there can
    destroy another session's uncommitted work. Work in a per-issue worktree:
 
+   Run these one at a time, writing the values you get back literally into
+   the next command (quote paths with spaces). Permission allowlists match
+   command text, so `VAR=$(...)` lines and `&&`/`||` chains get denied in
+   unattended runs:
+
    ```bash
-   MAIN="$(git rev-parse --show-toplevel)"
-   W="$MAIN/.claude/worktrees/[number]"
-   BASE="$(git -C "$MAIN" symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null || echo origin/main)"
-   git -C "$MAIN" fetch origin
-   git -C "$MAIN" worktree add "$W" -b fix/[number]-[short-slug] "$BASE" 2>/dev/null \
-     || echo "worktree already exists - reusing it"
-   cd "$W"
+   git worktree list --porcelain
+   git symbolic-ref --short refs/remotes/origin/HEAD
+   git -C "<main>" fetch origin
+   git -C "<main>" worktree add "<main>/.claude/worktrees/[number]" -b fix/[number]-[short-slug] <base>
    ```
 
+   `<main>` is the first `worktree` line of the list (the main checkout,
+   even when you run this from another worktree). `<base>` is the second
+   command's output, e.g. `origin/main`; use `origin/main` if it fails.
+
    - **Always pass the remote default branch as the base ref** (after a
-     fetch). A bare `worktree add "$W" -b ...` branches from whatever the
+     fetch). A bare `worktree add <path> -b ...` branches from whatever the
      main checkout's HEAD is, which may be another session's half-finished
      feature branch; the new PR then carries that branch's whole diff.
    - Gitignored files (`.env`, `node_modules`, a virtualenv) don't come
-     along. Symlink the ones the project needs, e.g.
-     `for f in .env node_modules .venv; do [ -e "$MAIN/$f" ] && [ ! -e "$W/$f" ] && ln -s "$MAIN/$f" "$W/$f"; done`
-   - If a worktree for this issue already exists, enter it and continue
-     from its current state. Don't create a duplicate or reset it.
+     along. Symlink each one the project needs, one command each:
+     `ln -s "<main>/.venv" "<main>/.claude/worktrees/[number]/.venv"`
+   - Then work in the worktree: `git -C "<worktree>"` and absolute paths,
+     not `cd <worktree> && ...`.
+   - If a worktree for this issue already exists (`worktree add` says so),
+     work in it and continue from its current state. Don't create a
+     duplicate or reset it.
    - `.claude/worktrees/` should be in `.gitignore`. If it isn't, say so.
    - If the project has no remote, or the user asks to work in place, skip
      this step and say so.
@@ -146,7 +155,7 @@ Argument: $ARGUMENTS
 
 7. **Before opening the PR**:
    - **Size check.** Count added lines outside tests and docs, e.g.
-     `git diff --numstat "$BASE"...HEAD -- . ':!tests' ':!docs'`. Over about
+     `git diff --numstat <base>...HEAD -- . ':!tests' ':!docs'`. Over about
      600, split the change into PRs that each stand on their own before
      opening any of them. Large PRs take far more review rounds than small
      ones.
@@ -175,7 +184,7 @@ Argument: $ARGUMENTS
      merge. Otherwise ask whether to close it:
      `gh issue close [number] --comment "Completed via LeanVibes"`
    - After the PR merges, remove the worktree:
-     `git -C "$MAIN" worktree remove "$MAIN/.claude/worktrees/[number]"`
+     `git -C "<main>" worktree remove "<main>/.claude/worktrees/[number]"`
 
 ## Parking an issue
 

@@ -94,9 +94,11 @@ Argument: $ARGUMENTS
 
 5. **Add to the project board** (if configured):
    ```bash
-   PROJECT_NUM=$(gh project list --owner @me --format json 2>/dev/null \
-     | jq -r '[.projects[] | select(.title=="Backlog") | .number] | first // empty')
-   [ -n "$PROJECT_NUM" ] && gh project item-add "$PROJECT_NUM" --owner @me --url [issue URL]
+   gh project list --owner @me --format json --jq '[.projects[] | select(.title=="Backlog") | .number] | first // empty'
+   ```
+   If that prints a number, add the issue (skip this when it prints nothing):
+   ```bash
+   gh project item-add <number> --owner @me --url [issue URL]
    ```
 
 6. **Confirm to user**:
