@@ -41,6 +41,8 @@ Every subcommand prints one JSON object on stdout.
         git worktree add <main>/.claude/worktrees/NAME -B BRANCH REF
         (REF defaults to origin/BRANCH, fetched first), then symlink each
         --link path (e.g. .venv, .env) from the main checkout if it exists.
+        If another worktree already has BRANCH checked out, print that one
+        with "existing": true instead.
     worktree remove PATH
         Remove the untracked top-level symlinks in PATH, then
         git worktree remove PATH (never --force).
@@ -254,6 +256,12 @@ def worktree_find(branch: str, cwd: Optional[str] = None) -> Optional[str]:
 
 def worktree_add(name: str, branch: str, start: Optional[str], links: List[str]) -> dict:
     main = main_checkout()
+    existing = worktree_find(branch, main)
+    if existing is not None and Path(existing) != Path(main):
+        # Already checked out in another worktree (e.g. the implementer's):
+        # use that one rather than failing on a second checkout.
+        return {"path": existing, "branch": branch, "start": None, "linked": [],
+                "existing": True}
     path = Path(main) / ".claude" / "worktrees" / name
     if path.exists():
         raise GitError(f"{path} already exists")

@@ -227,6 +227,14 @@ class WorktreeTests(RepoCase):
         _, found = run(["worktree", "find", "feature"])
         self.assertIsNone(found["path"])
 
+    def test_branch_already_in_a_worktree_is_reused(self):
+        _, first = run(["worktree", "add", "10", "feature"])
+        code, out = run(["worktree", "add", "pr-16", "feature", "--link", ".venv"])
+        self.assertEqual(code, 0)
+        self.assertTrue(out["existing"])
+        self.assertEqual(out["path"], first["path"])
+        self.assertFalse((self.main / ".claude" / "worktrees" / "pr-16").exists())
+
     def test_new_branch_from_base(self):
         code, out = run(["worktree", "add", "8", "fix/8-x", "--start", "origin/main"])
         self.assertEqual(code, 0)
@@ -241,7 +249,7 @@ class WorktreeTests(RepoCase):
 
     def test_add_existing_path_fails(self):
         run(["worktree", "add", "pr-7", "feature"])
-        code, _ = run(["worktree", "add", "pr-7", "feature"])
+        code, _ = run(["worktree", "add", "pr-7", "other", "--start", "origin/main"])
         self.assertEqual(code, 1)
 
 

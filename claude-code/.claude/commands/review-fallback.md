@@ -87,10 +87,11 @@ claim is "this used to work". Hostile inputs no caller builds are worth
 running only at a trust boundary (request bodies, third-party payloads,
 user-edited config). Report what you ran.
 
-Write each scratch script to a file with the Write tool and run it as one
-command (`<interpreter> /tmp/review-scratch/check_x.py`, with the import path
-set inside the script). Unattended runs deny `cd <dir> && ...` and
-multi-line `-c` strings.
+Write each scratch script to a file with the Write tool (it creates the
+directory; don't `mkdir` it) and run it as one command
+(`<interpreter> /tmp/review-scratch/check_x.py`, with the import path set
+inside the script). Unattended runs deny `mkdir` outside the project,
+`cd <dir> && ...` and multi-line `-c` strings.
 
 ### 4. Try to disprove each candidate
 

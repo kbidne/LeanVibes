@@ -524,7 +524,8 @@ If anything was fixed, the fixer then:
   that finding into the review body. A round with nothing fixed posts no
   review. Save `review_id` at once.
 - **Update the one status comment.** Its first line is the marker
-  `<!-- review-loop-status -->`. Find it by the marker (create it in round 1),
+  `<!-- review-loop-status -->`. Find it by the marker (create it in round 1
+  with `gh pr comment <N> --body-file <file>`, never `-F body="$(cat ...)"`),
   edit it in place
   (`gh api repos/{owner}/{repo}/issues/comments/<id> --method PATCH -F body=@<file>`),
   save `status_comment_id`. Content: the round table (step 9), then Fixed
