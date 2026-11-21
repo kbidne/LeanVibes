@@ -144,7 +144,8 @@ implementer's PR-size limit, not the issue count.
 `failed`, `locked`, `design_posted`. **In flight:** `implementing`,
 `pr_open`, `loop_running`, `designing`, `stopped`.
 
-**Sprint state:** `$MAIN/.git/backlog-sprint/state.json`, in the main
+**Sprint state:** `<sd>/state.json`, where `<sd>` is
+`<main>/.git/backlog-sprint`, in the main
 repository's git dir so it outlives worktrees and sessions:
 
 ```json
@@ -163,8 +164,9 @@ repository's git dir so it outlives worktrees and sessions:
 ```
 
 Agent `tokens` and `minutes` are copied from the Agent result's usage line,
-never estimated; `null` when it doesn't report them. Write the file to
-`state.json.tmp.$PPID` and `mv` it over, so a crash never leaves half a file.
+never estimated; `null` when it doesn't report them. Read and write the file
+with the Read and Write tools (whole file each time), and take times from
+`python3 .claude/scripts/workflow_state.py now`, never from memory.
 
 **Models** (pass `model` on every Agent spawn; never leave it to inherit):
 
@@ -179,33 +181,44 @@ never estimated; `null` when it doesn't report them. Write the file to
 ## Instructions
 
 Run from the main checkout or any worktree; the sprint itself edits no
-tracked file. Shell variables don't persist between Bash calls, so set them
-in each call that uses them:
+tracked file.
+
+**One command per Bash call, values spelled out.** Permission allowlists
+match command text, so a call that starts with `VAR=...`, uses `$(...)`,
+chains with `&&`, or writes into `.git/` with `mkdir`, `rm`, `mv` or `>>` is
+denied in unattended runs, and the sprint can't start. Get the values once
+and write them literally (quoted when a path has a space) in every later
+call:
 
 ```bash
-MAIN="$(git worktree list --porcelain | sed -n '1s/^worktree //p')"   # the path may contain a space
-SD="$MAIN/.git/backlog-sprint"; mkdir -p "$SD"
-BASE="$(git -C "$MAIN" symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null | sed 's#^origin/##')"; BASE="${BASE:-main}"
+python3 .claude/scripts/workflow_state.py paths
+python3 .claude/scripts/workflow_state.py statedir backlog-sprint --common
 ```
+
+`paths` gives `<main>` (the main checkout) and `<base>` (the default
+branch); `statedir` creates and prints `<sd>`. If a step below is denied
+anyway, don't stop: say which command was denied and do the step with
+`workflow_state.py`, `git -C`, or the Read and Write tools.
 
 ### 1. Lock, then load or start the sprint
 
 **Take the sprint lock first**, the same way `/review-loop` takes its lock:
 
 ```bash
-(set -o noclobber; printf '{"pid": %s, "started_at": "%s"}\n' "$PPID" "$(date -u +%FT%TZ)" > "$SD/lock")
+python3 .claude/scripts/workflow_state.py lock acquire backlog-sprint --common
 ```
 
-If the file exists, read its pid. A live pid (`kill -0`) that isn't this
-session's: another sprint is running; stop and say so with the pid, start
-time and lock path, and add "if that session is idle or stopped, close it or
-delete the lock and run again". A dead pid, or this session's own: `rm -f` it
-and take the lock again; if the noclobber create then fails, another session
-won, so re-read and stop. **Every stop of the run releases the lock**
-(`rm -f "$SD/lock"`, only when its pid is `$PPID`), except the stop "another
-sprint is running".
+It replaces a lock whose pid is dead or this session's own. Exit 3: another
+sprint is running; stop and say so with the holder's pid, start time and the
+lock path, and add "if that session is idle or stopped, close it or delete
+the lock and run again". **Every stop of the run releases the lock**, except
+that one:
 
-Then `cat "$SD/state.json" 2>/dev/null`.
+```bash
+python3 .claude/scripts/workflow_state.py lock release backlog-sprint --common
+```
+
+Then read `<sd>/state.json` with the Read tool, if it exists.
 
 - **An unfinished sprint** (any item not final) and no `--new`: resume it.
   Say which items are in flight and carry on at step 3 with the same queue;
@@ -222,7 +235,7 @@ Then `cat "$SD/state.json" 2>/dev/null`.
   - `implementing`: `gh pr list --head "<branch>" --state open --json number,headRefName`
     (else `gh pr list --search "head:fix/<issue>-"`). A PR exists: move to
     `pr_open` and record `pr`, `branch` and `worktree` (from
-    `git worktree list --porcelain`; else `$MAIN/.claude/worktrees/<issue>`).
+    `workflow_state.py worktree find <branch>`; else `<main>/.claude/worktrees/<issue>`).
     No PR but the worktree exists: spawn a new implementer (step 3a) and tell
     it the worktree may hold a previous implementer's uncommitted work: keep
     what matches the criteria, finish the rest, never `git checkout --` or
@@ -232,8 +245,8 @@ Then `cat "$SD/state.json" 2>/dev/null`.
     with its URL. Not found: spawn the design agent again (step 3d).
   - `pr_open`: step 3b. `loop_running` or `stopped`: step 3b's overlap check,
     then step 3c; `/review-loop` resumes itself from its own state file.
-- **`--new`, or every item is final:** rename the old file to
-  `state.<sprint_id>.json` and start a new sprint with a fresh `sprint_id`
+- **`--new`, or every item is final:** write the old file's content to
+  `<sd>/state.<sprint_id>.json` (Write tool) and start a new sprint with a fresh `sprint_id`
   (UTC, minute precision) and `max_prs`.
 - **`--issue N`:** the queue is that one issue. With an unfinished sprint and
   no `--new`, resuming wins: say so and ask for `--new`. Otherwise start a new
@@ -244,7 +257,7 @@ Then `cat "$SD/state.json" 2>/dev/null`.
 ### 2. Triage and approve the queue
 
 ```bash
-python3 "$MAIN/.claude/scripts/backlog_sprint_triage.py" --repo "$MAIN" --out "$SD/triage.json"
+python3 .claude/scripts/backlog_sprint_triage.py --repo "<main>" --out "<sd>/triage.json"
 ```
 
 Exit 2 is a failure (a config error or a `gh` call): show the error and stop.
@@ -254,7 +267,7 @@ the ledger sweep, chain roots with their skipped follow-ups, and the other
 groups.
 
 - **May already be fixed:** for each eligible issue listed, read the commit
-  (`git -C "$MAIN" show -s <sha>`) before asking, say which look fixed, and
+  (`git -C "<main>" show -s <sha>`) before asking, say which look fixed, and
   leave those out of the recommended queue. The list is a prompt: a squash
   body also names issues it only refers to.
 - **Ledger sweep:** say which lines, if any, describe a failure that has
@@ -319,15 +332,17 @@ this session's reading of the issue) with `model` from `implementer_model`.
 Its brief, verbatim apart from the numbers and paths:
 
 > You are the implementer for backlog issue #N in a sprint. Do all work in
-> one worktree, `<MAIN>/.claude/worktrees/N`; never touch the main checkout or
+> one worktree, `<main>/.claude/worktrees/N`; never touch the main checkout or
 > any other worktree.
 >
 > 1. Invoke the Skill tool with skill `backlog` and args `N`, and follow its
 >    steps 4 to 8 exactly: read the issue and its last comments, extract the
 >    acceptance criteria, make the plan, create the worktree on a branch
->    `fix/N-<slug>` off `origin/<BASE>`, implement, write the tests, run the
+>    `fix/N-<slug>` off `origin/<base>` with one command,
+>    `python3 .claude/scripts/workflow_state.py worktree add N fix/N-<slug> --start origin/<base> --link .venv`
+>    (one `--link` per gitignored file the tests need), implement, write the tests, run the
 >    size check, lint and tests, then open the PR with
->    `gh pr create --head <branch> --base <BASE> --title ... --body-file ...`.
+>    `gh pr create --head <branch> --base <base> --title ... --body-file ...`.
 >    The body says `Closes #N` (or `Refs #N` when the issue says it must stay
 >    open) and ends with the line `Opened by /backlog-sprint`.
 > 2. Never ask a question. Where `/backlog` would ask, take the option the
@@ -348,6 +363,10 @@ Its brief, verbatim apart from the numbers and paths:
 >    comment on the issue.
 > 7. The PR title must not match `fix: #N` (GitHub closes issues from the
 >    squash title); say what changed instead.
+> 8. Run every shell step as one command with literal paths: `git -C <path>`,
+>    never `cd <path> && ...`; no `VAR=...` or `$(...)`; commit with
+>    `-m "..."` arguments, not a heredoc; write the PR body with the Write
+>    tool and pass it with `--body-file`. Unattended runs deny the rest.
 >
 > Return JSON only:
 > `{"status": "pr_open|blocked|failed", "issue": N, "pr": M, "url": "...",
@@ -380,16 +399,12 @@ The base branch may have moved since the branch point, mostly on a resumed
 sprint:
 
 ```bash
-W="<worktree from the state>"
-git -C "$W" fetch -q origin "$BASE"
-MB="$(git -C "$W" merge-base "origin/$BASE" HEAD)"
-comm -12 <(git -C "$W" diff --name-only "$MB" "origin/$BASE" | sort) \
-         <(git -C "$W" diff --name-only "$MB" HEAD | sort)
+python3 .claude/scripts/workflow_state.py overlap <base> --worktree "<worktree from the state>"
 ```
 
-- **No common file:** leave the branch alone.
+- **No common file** (`files` is empty): leave the branch alone.
 - **A common file:** spawn a `general-purpose` agent, `model: sonnet`, in that
-  worktree: merge `origin/<BASE>` into the branch (`git merge`, no rebase, no
+  worktree: merge `origin/<base>` into the branch (`git merge`, no rebase, no
   force-push), resolve conflicts keeping the PR's intent, re-run the PR's tests
   and lint, commit, `git push origin HEAD:<branch>`, and return
   `{"merged_base": true, "head": "<sha>", "conflicts": [...]}`. Record
@@ -399,10 +414,10 @@ comm -12 <(git -C "$W" diff --name-only "$MB" "origin/$BASE" | sort) \
 #### 3c. Check the loop's lock, then run the loop
 
 ```bash
-W="<worktree from the state>"; cat "$(git -C "$W" rev-parse --git-dir)/review-loop/lock" 2>/dev/null
+python3 .claude/scripts/workflow_state.py lock show review-loop --worktree "<worktree from the state>"
 ```
 
-A lock with a live pid that isn't this session's: another session's loop is
+`alive` and not `ours`: another session's loop is
 on this PR. Set the item `locked` (final), note the pid, start time and lock
 path, add "if that session is idle or stopped, delete the lock and re-run
 `/review-loop <M>` from the PR's worktree", count it toward `--max-prs`, and
@@ -436,8 +451,7 @@ its `auto_accepted` decisions and `rounds`, and save the state.
 Read the loop's metrics line for this PR (the highest `run`):
 
 ```bash
-jq -sc --argjson m <M> 'map(select(.type == "run" and .pr == $m)) | max_by(.run) // empty' \
-  "$(git -C "$MAIN" rev-parse --path-format=absolute --git-common-dir)/review-loop-metrics.jsonl"
+jq -sc --argjson m <M> 'map(select(.type == "run" and .pr == $m)) | max_by(.run) // empty' "<common_dir>/review-loop-metrics.jsonl"
 ```
 
 Go back to the top of step 3.
@@ -454,7 +468,7 @@ verbatim apart from the numbers:
 > but do not plan it or give it a `plan` entry.") Read the root, every
 > follow-up, and the merged PRs their footers name (`gh issue view`,
 > `gh pr view --json body,files,mergeCommit`), then the code they touch at
-> `origin/<BASE>`. Do not change any file and do not open a PR.
+> `origin/<base>`. Do not change any file and do not open a PR.
 >
 > Write one design note, at most 60 lines, and post it as a comment on #R with
 > `gh issue comment R --body-file <file>`, headed
@@ -467,7 +481,7 @@ verbatim apart from the numbers:
 > it. No label changes, no edits to the follow-ups.
 >
 > Then give every follow-up one action in the JSON `plan`. `patch`: fix it on
-> its own. `close_fixed`: `origin/<BASE>` already does what every acceptance
+> its own. `close_fixed`: `origin/<base>` already does what every acceptance
 > criterion asks; give one `evidence` line per criterion, each a file:line or
 > test path you opened (a merged PR is not evidence by itself: a PR can close
 > fewer items than its issue lists). With no checklist, one evidence line per
@@ -495,7 +509,7 @@ No comment: if the agent stopped on a usage limit, leave it `designing` and
 
 ### 4. Report
 
-Print the report and save it to `$SD/report.<sprint_id>.md`, then release the
+Print the report and save it to `<sd>/report.<sprint_id>.md` with the Write tool, then release the
 lock.
 
 ```markdown
