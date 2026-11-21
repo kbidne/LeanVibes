@@ -1,0 +1,28 @@
+{
+  "_comment": "Copy to .claude/review-loop.json and edit. Patterns are fnmatch globs matched against repo-relative paths; a pattern ending in / matches everything under that directory.",
+
+  "risky_paths": [
+    "src/payments/",
+    "src/auth/",
+    "migrations/"
+  ],
+  "always_ask_paths": [
+    "migrations/",
+    ".github/workflows/",
+    "infra/"
+  ],
+
+  "lint_commands": [
+    "npm run lint",
+    "npx tsc --noEmit"
+  ],
+  "test_command": "npm test -- {tests}",
+  "test_busy_exit_code": null,
+
+  "fix_budget_lines": 150,
+  "pr_size_warn_lines": 600,
+  "exclude_from_line_counts": ["tests/", "test/", "docs/", "*.md"],
+
+  "merge_method": "squash",
+  "ledger_issue_title": "Review-loop ledger"
+}

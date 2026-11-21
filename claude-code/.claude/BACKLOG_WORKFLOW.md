@@ -80,6 +80,17 @@ When Claude identifies work that could be deferred, it will prompt:
 /backlog suggest      # Get Claude's recommendation (workable and due issues only)
 ```
 
+#### `/review-loop` - Review, Fix, Re-review, Merge
+
+```
+/review-loop 57              # ends in verdict ready (merged) or decision_needed
+/review-loop 57 --no-merge   # stop at the verdict
+```
+
+See the command file for the rules. Non-blocking notes go to one
+`Review-loop ledger` issue; findings worth an issue are filed with the
+`/backlog-add` template and a `Found by /review-loop on PR #N` footer.
+
 #### `/backlog-add` - Quick Add to Backlog
 
 ```
@@ -236,7 +247,11 @@ your-repo/
 ├── .claude/
 │   ├── commands/
 │   │   ├── backlog.md          # /backlog command
-│   │   └── backlog-add.md      # /backlog-add command
+│   │   ├── backlog-add.md      # /backlog-add command
+│   │   ├── review-loop.md      # /review-loop command
+│   │   └── review-fallback.md  # fallback reviewer
+│   ├── scripts/
+│   │   └── review_loop_policy.py
 │   ├── worktrees/              # Per-issue worktrees (gitignored)
 │   └── BACKLOG_WORKFLOW.md     # This documentation
 ├── .gitignore                  # Add: .claude/worktrees/
@@ -315,7 +330,6 @@ Ensure you're in the correct repository and the project name matches exactly.
 ## Contributing
 
 This workflow is open for improvements. Key areas:
-- [ ] Review loop (review -> fix -> re-review -> verdict)
 - [ ] Sprint runner over the backlog
 - [ ] Milestone/sprint integration
 - [ ] Automated priority aging

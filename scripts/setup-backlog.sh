@@ -7,6 +7,18 @@
 set -e
 
 PROJECT_TITLE="Backlog"
+WITH_REVIEW_LOOP=0
+
+for arg in "$@"; do
+    case "$arg" in
+        --review-loop) WITH_REVIEW_LOOP=1 ;;
+        -h|--help)
+            echo "Usage: setup-backlog.sh [--review-loop]"
+            echo "  --review-loop   also create the review:* labels used by /review-loop"
+            exit 0 ;;
+        *) echo "Unknown option: $arg (try --help)"; exit 1 ;;
+    esac
+done
 
 echo "========================================"
 echo "  LeanVibes Backlog Setup"
@@ -99,6 +111,14 @@ create_label "waiting:external" "C5DEF5" "Parked on a vendor, third party, or ou
 create_label "epic" "3E4B9E" "Tracking issue grouping related work items"
 create_label "stays open" "BFD4F2" "Kept open on purpose (tracker or owner's call); not a work item to pick up"
 
+# Review-loop labels (opt-in; /review-loop also creates them on first use)
+if [ "$WITH_REVIEW_LOOP" -eq 1 ]; then
+    create_label "review:ready" "0E8A16" "/review-loop verdict: verified head, CI green, mergeable"
+    create_label "review:decision-needed" "D93F0B" "/review-loop stopped on a question for a human"
+    create_label "review:chain" "FBCA04" "Part of a chain of loop-filed follow-ups; needs a design pass on the root issue"
+    create_label "review:ledger" "C2E0C6" "Collects /review-loop's non-blocking notes"
+fi
+
 echo ""
 
 if [ "$LABEL_FAILURES" -gt 0 ]; then
@@ -163,6 +183,9 @@ echo "  - priority:high, priority:medium, priority:low"
 echo "  - type:feature, type:bug, type:enhancement, type:debt"
 echo "  - waiting:date, waiting:decision, waiting:issue, waiting:external"
 echo "  - epic, stays open"
+if [ "$WITH_REVIEW_LOOP" -eq 1 ]; then
+    echo "  - review:ready, review:decision-needed, review:chain, review:ledger"
+fi
 echo ""
 echo "Next steps:"
 echo "  1. Add the backlog section to your CLAUDE.md (or .cursorrules)"

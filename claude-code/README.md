@@ -78,6 +78,26 @@ Fixes #42
 🤖 Generated with Claude Code
 ```
 
+### `/review-loop` - Review, Fix, Re-review, Merge
+
+```
+/review-loop 57                    # review PR #57, fix blocking findings, merge if ready
+/review-loop 57 --no-merge         # stop at the verdict
+/review-loop 57 --ask-decisions    # never take its own recommendation on a decision
+/review-loop 57 --level high       # deeper closing review (default: medium)
+```
+
+The loop ends in one of two verdicts: **`ready`** (merged unless `--no-merge`) or **`decision_needed`** (at most three questions, each with a recommended answer). The rules that make it terminate:
+
+- **Blocking means reachable.** A finding blocks only if something in the repo today can trigger it.
+- **Only confirmed blocking findings change code.** Style, simplification and unreachable findings go to a single ledger issue, never to a fixer.
+- **Rounds 2+ review only the fix commits**, with a fresh reviewer that runs the code instead of only reading it.
+- **Only a verified head merges:** reviewed clean, nothing pushed since, CI green.
+- **Caps, not heuristics:** `--max-deltas` delta rounds, a per-round fix budget, at most two issues filed per PR.
+- **Follow-ups of follow-ups** are flagged as a design problem instead of filing more.
+
+Reviewers are fresh Opus agents running Claude Code's `/code-review`; where that skill is unavailable, `/review-fallback` stands in. Optional per-project settings (risky paths, lint and test commands, budgets) go in `.claude/review-loop.json`; copy `review-loop.json.example`. `.claude/scripts/review_loop_policy.py` applies the path rules (standard-library Python 3.8+).
+
 ## Parking Issues
 
 An issue that can't move yet gets one `waiting:*` label and a comment whose first line says what it's waiting for:
@@ -127,8 +147,13 @@ your-project/
 └── .claude/
     ├── commands/
     │   ├── backlog.md            # /backlog command
-    │   └── backlog-add.md        # /backlog-add command
-    └── worktrees/                # Per-issue worktrees (gitignored)
+    │   ├── backlog-add.md        # /backlog-add command
+    │   ├── review-loop.md        # /review-loop command
+    │   └── review-fallback.md    # reviewer used when /code-review is unavailable
+    ├── scripts/
+    │   └── review_loop_policy.py # risky / always-ask path rules
+    ├── review-loop.json          # optional, from review-loop.json.example
+    └── worktrees/                # Per-issue and per-PR worktrees (gitignored)
 ```
 
 ## More Information
