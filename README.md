@@ -81,6 +81,8 @@ Choose your AI coding assistant and follow the instructions in that folder:
 - **[Cursor](cursor/)** - Copy `.cursorrules` file
 - **[GitHub Copilot](github-copilot/)** - Use the provided prompt instructions
 
+Installed files don't update themselves. To pick up a new version, re-copy them: see [Updating](claude-code/README.md#updating) for Claude Code, and the [release notes](#release-notes) for what changed.
+
 ### 4. Try the Example Project (Optional)
 
 New to LeanVibes? Check out the **[example project](example/)** - a fake auth system with a guided walkthrough to practice the workflow.
@@ -132,6 +134,11 @@ Created with `--sprint` (which implies `--review-loop`):
 | `design:patch-separately` | A design note says to patch this chain follow-up on its own |
 
 ## Release Notes
+
+### Unreleased
+
+- **`/backlog` reads comments with plain `gh issue view N --comments`** ([#8](https://github.com/kbidne/LeanVibes/pull/8), Claude Code). The `--jq` interpolation and the `for` loop that fetched comments could be denied under a permission allowlist in unattended runs. Cut-off output now leaves a parked issue parked instead of guessing. To update, re-copy `.claude/commands/backlog.md` ([Updating](claude-code/README.md#updating)); no new labels.
+- **Updating instructions** for Claude Code installs ([Updating](claude-code/README.md#updating)).
 
 ### v1.2.0
 
