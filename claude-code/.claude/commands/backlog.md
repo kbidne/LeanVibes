@@ -30,14 +30,14 @@ Argument: $ARGUMENTS
    3. **Workable:** everything else.
 
    Then check which `waiting:date` and `waiting:issue` issues are due, from
-   the first line of each one's latest `Parked:` comment:
+   the first line of each one's latest `Parked:` comment. Run one plain
+   command per issue, not a `for` loop: a command that starts with `for`
+   doesn't match a `gh` allow rule, so an unattended run can deny it.
    ```bash
-   for n in <waiting:date and waiting:issue numbers>; do
-     printf '%s ' "$n"
-     gh issue view "$n" --json comments \
-       --jq '[.comments[].body | select(startswith("Parked:")) | split("\n")[0]] | last // "no Parked: line"'
-   done
+   gh issue view [number] --comments
    ```
+   Comments print oldest first, with no dates (see step 4), so the latest
+   `Parked:` comment is the last one whose body starts with `Parked:`.
    - `Parked: waiting:date until YYYY-MM-DD`, with that date today or
      earlier: **due**.
    - `Parked: waiting:issue on #N`, with #N closed
@@ -81,9 +81,16 @@ Argument: $ARGUMENTS
      without labels, and a parked issue's reason is usually in a comment:
      ```bash
      gh issue view [number] --json title,body,labels
-     gh issue view [number] --json comments \
-       --jq '.comments[-5:][] | "---- \(.createdAt[:10]) \(.author.login)\n\(.body)"'
+     gh issue view [number] --comments
      ```
+     The second command prints every comment, oldest first, each under an
+     `author:` header block, with no dates: the last block is the newest.
+     The latest `Parked:` comment is the last one whose body starts with
+     `Parked:`. No output means no comments. If the output is cut off, the
+     newest comments are the missing part: say so rather than guess.
+     Keep it a plain command. The earlier `--jq` version with `\(...)`
+     string interpolation was denied in an unattended run under a
+     permission allowlist, while plain `gh` commands were allowed.
    - Then check its labels:
      - `waiting:*`: say what it is waiting on (the latest `Parked:`
        comment, else the body) and whether that has happened. Confirm with
