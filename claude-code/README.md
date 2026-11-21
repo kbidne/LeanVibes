@@ -38,6 +38,25 @@ echo '.claude/worktrees/' >> .gitignore
 
 `/backlog` creates one git worktree per issue under `.claude/worktrees/`, so several Claude sessions can work in the same repo without overwriting each other.
 
+## Updating
+
+Nothing updates on its own: each project keeps the files it copied. To pick up a new version, check the [release notes](../README.md#release-notes), then re-copy the shipped files.
+
+```bash
+git -C /path/to/LeanVibes pull
+mkdir -p /your/project/.claude/commands /your/project/.claude/scripts
+cp /path/to/LeanVibes/claude-code/.claude/commands/*.md /your/project/.claude/commands/
+cp /path/to/LeanVibes/claude-code/.claude/scripts/*.py /your/project/.claude/scripts/
+cp /path/to/LeanVibes/claude-code/.claude/BACKLOG_WORKFLOW.md /path/to/LeanVibes/claude-code/.claude/review-loop.json.example /your/project/.claude/
+```
+
+- **Keep your own files.** `.claude/review-loop.json`, `CLAUDE.md` and `.claude/settings*.json` belong to your project. The commands above don't touch them; `cp -r` of the whole `.claude/` folder would overwrite your settings.
+- **Edited a command?** Compare before copying, and carry your changes over by hand:
+  ```bash
+  diff -ru /your/project/.claude/commands /path/to/LeanVibes/claude-code/.claude/commands
+  ```
+- **New labels.** If the release notes mention new labels, re-run the setup script with the flags you used before (`--review-loop`, `--sprint`). It is safe to re-run.
+
 ## Usage
 
 ### `/backlog` - View & Work on Backlog
