@@ -7,3 +7,6 @@
 
 # Local settings (users should not commit their local settings)
 .claude/settings.local.json
+
+# Per-issue worktrees created by /backlog
+.claude/worktrees/

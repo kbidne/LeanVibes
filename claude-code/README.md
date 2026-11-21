@@ -22,21 +22,29 @@ cp -r /path/to/LeanVibes/claude-code/.claude /your/project/
 
 ### 3. Add CLAUDE.md (Optional but Recommended)
 
-For proactive backlog suggestions, copy and customize the example:
+For the "fix now or file?" policy and backlog suggestions, copy and customize the example:
 
 ```bash
 cp /path/to/LeanVibes/claude-code/CLAUDE.md.example /your/project/CLAUDE.md
 ```
 
-This tells Claude to suggest adding items to the backlog when it identifies deferrable work.
+This tells Claude when to fix a defect on the spot and when to suggest filing it instead.
+
+### 4. Ignore the worktree directory
+
+```bash
+echo '.claude/worktrees/' >> .gitignore
+```
+
+`/backlog` creates one git worktree per issue under `.claude/worktrees/`, so several Claude sessions can work in the same repo without overwriting each other.
 
 ## Usage
 
 ### `/backlog` - View & Work on Backlog
 
 ```
-/backlog              # List all backlog items by priority
-/backlog 42           # Start working on issue #42
+/backlog              # List open issues: workable by priority, due, parked, epics
+/backlog 42           # Start working on issue #42 in its own worktree
 /backlog suggest      # Get Claude's recommendation
 ```
 
@@ -70,15 +78,28 @@ Fixes #42
 🤖 Generated with Claude Code
 ```
 
-## Proactive Suggestions
+## Parking Issues
 
-With `CLAUDE.md` configured, Claude will suggest deferring work when:
+An issue that can't move yet gets one `waiting:*` label and a comment whose first line says what it's waiting for:
 
-- Work is tangential to the main task
-- It's an enhancement rather than a requirement
-- It would significantly expand scope
-- You mention "later" or "eventually"
-- Claude identifies technical debt or optimization opportunities
+```bash
+gh issue edit 42 --add-label waiting:date
+gh issue comment 42 --body "Parked: waiting:date until 2027-01-15
+Need 30 days of data before reading the result."
+```
+
+`/backlog` lists parked issues apart from workable ones and moves them to **Due for a look** once the date passes (or, for `Parked: waiting:issue on #N`, once #N closes). See "Parking an issue" in `backlog.md` for all four formats.
+
+## Fix Now or File?
+
+With `CLAUDE.md` configured, Claude fixes a defect on the spot when its cause is confirmed, the fix is small, and it needs no decision from you. It suggests filing instead when the work:
+
+- Needs your decision or a priority call
+- Has to wait (a date, data accumulating)
+- Spans several PRs
+- Would derail a task that must finish first
+- Has a cause that isn't understood yet
+- Is scope expansion: tangential, an enhancement, technical debt, or something you said to do "later"
 
 Example suggestion:
 ```
@@ -104,9 +125,10 @@ Example suggestion:
 your-project/
 ├── CLAUDE.md                     # Project instructions (optional)
 └── .claude/
-    └── commands/
-        ├── backlog.md            # /backlog command
-        └── backlog-add.md        # /backlog-add command
+    ├── commands/
+    │   ├── backlog.md            # /backlog command
+    │   └── backlog-add.md        # /backlog-add command
+    └── worktrees/                # Per-issue worktrees (gitignored)
 ```
 
 ## More Information

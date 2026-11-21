@@ -26,7 +26,7 @@ GitHub Copilot Chat uses natural language. Here are example prompts:
 
 ```
 Run this command and show me the results organized by priority:
-gh issue list --label backlog --state open --json number,title,labels
+gh issue list --state open --limit 500 --json number,title,labels
 ```
 
 ### Add to Backlog
@@ -62,7 +62,7 @@ Create a commit message for this change that includes "Fixes #42" to link it to 
 Paste this at the start of a session to enable backlog awareness:
 
 ```
-I'm using the LeanVibes backlog workflow. When you notice work that could be deferred (enhancements, optimizations, nice-to-haves), suggest adding it to the backlog instead of implementing immediately.
+I'm using the LeanVibes backlog workflow. Fix small, confirmed defects now. When work needs my decision, has to wait, spans several PRs, or is scope I didn't ask for (enhancements, optimizations, nice-to-haves), suggest adding it to the backlog instead.
 
 To add items: gh issue create --label backlog --label priority:[high/medium/low] --label type:[feature/bug/enhancement/debt]
 
@@ -93,7 +93,7 @@ Unlike Claude Code and Cursor, GitHub Copilot:
 3. **GitHub CLI Aliases** - Set up `gh alias` for frequent operations:
    ```bash
    gh alias set backlog-add 'issue create --label backlog'
-   gh alias set backlog-list 'issue list --label backlog --state open'
+   gh alias set backlog-list 'issue list --state open --limit 500'
    ```
 
 ## More Information

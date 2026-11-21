@@ -5,9 +5,12 @@ A lightweight workflow for managing requirements and backlogs using Claude Code 
 ## Overview
 
 This workflow enables:
+- **Fix now or file** - Claude fixes small, confirmed defects on the spot and files the rest
 - **Proactive backlog suggestions** - Claude identifies deferrable work during conversations
 - **Quick issue creation** - Add items to backlog without leaving the conversation
 - **Prioritized work selection** - Work through backlog items systematically
+- **Parking** - `waiting:*` labels plus a `Parked:` comment so blocked issues resurface when they come due
+- **Per-issue worktrees** - parallel AI sessions never trample each other's work
 - **GitHub Projects integration** - Visual board for tracking progress
 
 ## Quick Start
@@ -26,11 +29,11 @@ gh auth login
 
 ```bash
 # From your repo root
-./.claude/scripts/setup-backlog.sh
+curl -sL https://raw.githubusercontent.com/kbidne/LeanVibes/main/scripts/setup-backlog.sh | bash
 ```
 
-This creates:
-- Required labels (`backlog`, `priority:high/medium/low`, `type:feature/bug/enhancement/debt`)
+This creates (or updates):
+- Labels: `backlog`, `priority:*`, `type:*`, `waiting:*`, `epic`, `stays open`
 - GitHub Project board named "Backlog"
 
 ### 3. Add to CLAUDE.md
@@ -72,9 +75,9 @@ When Claude identifies work that could be deferred, it will prompt:
 #### `/backlog` - View and Work on Backlog
 
 ```
-/backlog              # List all backlog items by priority
-/backlog 42           # Start working on issue #42
-/backlog suggest      # Get Claude's recommendation
+/backlog              # List open issues: workable by priority, due, parked, epics
+/backlog 42           # Start working on issue #42 (in its own worktree)
+/backlog suggest      # Get Claude's recommendation (workable and due issues only)
 ```
 
 #### `/backlog-add` - Quick Add to Backlog
@@ -91,7 +94,7 @@ When Claude identifies work that could be deferred, it will prompt:
 
 | Label | Color | Purpose |
 |-------|-------|---------|
-| `backlog` | `#0E8A16` | Identifies all backlog items |
+| `backlog` | `#0E8A16` | Provenance only: filed by a LeanVibes command. `/backlog` lists every open issue |
 | `priority:high` | `#D73A4A` | Urgent / blocking items |
 | `priority:medium` | `#FBCA04` | Important but not urgent |
 | `priority:low` | `#0075CA` | Nice to have / future work |
@@ -99,6 +102,28 @@ When Claude identifies work that could be deferred, it will prompt:
 | `type:bug` | `#D73A4A` | Defects to fix |
 | `type:enhancement` | `#7057FF` | Improvements to existing features |
 | `type:debt` | `#FEF2C0` | Technical debt / refactoring |
+| `waiting:date` | `#C5DEF5` | Parked until a date passes or a sample size is reached |
+| `waiting:decision` | `#C5DEF5` | Parked until the owner makes a named decision |
+| `waiting:issue` | `#C5DEF5` | Parked until another open issue lands |
+| `waiting:external` | `#C5DEF5` | Parked on a vendor, third party or outside demand |
+| `epic` | `#3E4B9E` | Tracking issue grouping related work items |
+| `stays open` | `#BFD4F2` | Kept open on purpose (tracker); not a work item |
+
+### Parking
+
+A parked issue carries one `waiting:*` label **and** a comment whose first
+line has a fixed format, so `/backlog` can tell when it comes due:
+
+| Label | First line of the comment |
+|---|---|
+| `waiting:date` | `Parked: waiting:date until YYYY-MM-DD` |
+| `waiting:decision` | `Parked: waiting:decision` (question on the next line) |
+| `waiting:issue` | `Parked: waiting:issue on #N` |
+| `waiting:external` | `Parked: waiting:external` (who and what on the next line) |
+
+`/backlog` lists a `waiting:date` issue as **due** once its date passes, and a
+`waiting:issue` issue as **may be unblocked** once #N closes. To push a date
+back, post a new `Parked:` comment; the latest one wins.
 
 ---
 
@@ -112,6 +137,12 @@ When Claude creates backlog items, it uses this format:
 
 ## Context
 [Why this came up - conversation context, user request, or identified need]
+
+Introduced by: PR #[N]
+[Bugs only - the PR whose change caused the bug, or `unknown`]
+
+## Why now
+[Optional: what it risks, what it blocks, a date it must land by]
 
 ## Suggested Agent(s)
 [Optional - only when the project defines specialized subagent types
@@ -185,48 +216,16 @@ every issue.
 
 ## CLAUDE.md Template
 
-Add this section to your project's CLAUDE.md:
+Copy [`claude-code/CLAUDE.md.example`](../CLAUDE.md.example) into your
+project's CLAUDE.md. It contains:
 
-```markdown
-## Backlog Workflow
-
-This project uses the Claude Code + GitHub Projects backlog workflow.
-
-### Proactive Suggestions
-
-When identifying work that could be deferred, present a backlog suggestion:
-
-\`\`\`
-+----------------------------------------------------------+
-|  BACKLOG SUGGESTION                                      |
-|                                                          |
-|  "[description of the work]"                             |
-|                                                          |
-|  [reason why it could be deferred]                       |
-|                                                          |
-|  - Type: [feature/bug/enhancement/debt]                  |
-|  - Suggested Priority: [high/medium/low]                 |
-|                                                          |
-|  [do it] - Implement now                                 |
-|  [backlog] - Add to backlog                              |
-|  [backlog high/medium/low] - Add with priority           |
-+----------------------------------------------------------+
-\`\`\`
-
-### When to Suggest Backlog
-
-Proactively suggest adding to backlog when:
-- Work is tangential to the main task
-- It's an enhancement rather than a requirement
-- It would significantly expand scope
-- The user mentions "later" or "eventually"
-- You identify technical debt or optimization opportunities
-
-### Commands
-
-- \`/backlog\` - View and select backlog items to work on
-- \`/backlog-add [priority] [type] [title]\` - Quick-add an item
-```
+- **Fix now or file?** - fix small, confirmed defects in the session as
+  their own PR; file an issue only when the work needs the owner, has to
+  wait, spans several PRs, the session is busy, the cause isn't understood,
+  or it is scope expansion the user didn't ask for.
+- **The backlog suggestion box** for the file-instead cases.
+- **Concurrent sessions** - work in `.claude/worktrees/`, never the main checkout.
+- **Labels** and **commit/PR linking** rules, including the multi-PR title trap.
 
 ---
 
@@ -238,10 +237,10 @@ your-repo/
 │   ├── commands/
 │   │   ├── backlog.md          # /backlog command
 │   │   └── backlog-add.md      # /backlog-add command
-│   ├── scripts/
-│   │   └── setup-backlog.sh    # One-time setup script
+│   ├── worktrees/              # Per-issue worktrees (gitignored)
 │   └── BACKLOG_WORKFLOW.md     # This documentation
-└── CLAUDE.md                    # Project context (add backlog section)
+├── .gitignore                  # Add: .claude/worktrees/
+└── CLAUDE.md                   # Project context (add backlog section)
 ```
 
 ---
@@ -256,8 +255,9 @@ To use this workflow in another repository:
 
 ```bash
 # From your new project root
-cp -r /path/to/source/.claude .
-./.claude/scripts/setup-backlog.sh
+cp -r /path/to/LeanVibes/claude-code/.claude .
+curl -sL https://raw.githubusercontent.com/kbidne/LeanVibes/main/scripts/setup-backlog.sh | bash
+echo '.claude/worktrees/' >> .gitignore
 ```
 
 ---
@@ -273,7 +273,7 @@ cp -r /path/to/source/.claude .
 
 ### For Claude (AI Context)
 
-1. **Be selective** - Don't suggest backlog for every small thing
+1. **Fix before filing** - A small, confirmed defect gets fixed now, not filed (see "Fix now or file?")
 2. **Provide context** - Issue descriptions should be actionable without conversation history
 3. **Suggest priority** - Always recommend a priority level with reasoning
 4. **Link related items** - Reference existing issues when relevant
@@ -293,7 +293,18 @@ gh auth login
 
 ### Labels already exist
 
-The setup script skips existing labels - this is fine.
+The setup script updates existing labels' color and description - this is fine,
+and re-running it is how an older install picks up new labels.
+
+### A label shows "Failed"
+
+The script prints the `gh` error. Usually it is auth (`gh auth status`) or
+missing write access to the repo.
+
+### Issues missing from `/backlog`
+
+Older LeanVibes versions only listed issues labelled `backlog`. The current
+`/backlog` lists every open issue; update `.claude/commands/backlog.md`.
 
 ### Project board not linking
 
@@ -304,11 +315,12 @@ Ensure you're in the correct repository and the project name matches exactly.
 ## Contributing
 
 This workflow is open for improvements. Key areas:
+- [ ] Review loop (review -> fix -> re-review -> verdict)
+- [ ] Sprint runner over the backlog
 - [ ] Milestone/sprint integration
-- [ ] Time tracking
 - [ ] Automated priority aging
 - [ ] Cross-repo backlog views
 
 ---
 
-*Workflow version 1.0 - Designed for Claude Code*
+*Workflow version 1.1 - Designed for Claude Code*

@@ -51,15 +51,19 @@ When working on a backlog item, Cursor will:
 2. Include `Fixes #[number]` in commit messages
 3. Include `Closes #[number]` in PR descriptions
 
-## Proactive Suggestions
+### Park an Issue
+- "Park #42 until January 15"
+- "Park #42 until #40 is done"
 
-With `.cursorrules` configured, Cursor will suggest deferring work when:
+Cursor adds a `waiting:*` label and a `Parked:` comment, and the backlog view flags the issue as due once the date passes or #40 closes.
 
-- Work is tangential to the main task
-- It's an enhancement rather than a requirement
-- It would significantly expand scope
-- You mention "later" or "eventually"
-- Cursor identifies technical debt
+## Fix Now or File?
+
+With `.cursorrules` configured, Cursor fixes a small defect on the spot when its cause is confirmed and it needs no decision from you. It suggests filing instead when the work:
+
+- Needs your decision, has to wait, or spans several PRs
+- Has a cause that isn't understood yet
+- Is scope expansion: tangential, an enhancement, technical debt, or something you said to do "later"
 
 Example interaction:
 ```
