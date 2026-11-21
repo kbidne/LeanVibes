@@ -131,6 +131,15 @@ Created with `--sprint` (which implies `--review-loop`):
 | `sprint:keep` | Queue a low-priority loop-filed issue despite the value floor |
 | `design:patch-separately` | A design note says to patch this chain follow-up on its own |
 
+## Release Notes
+
+### v1.2.0
+
+- **Parking and a wider `/backlog`** ([#4](https://github.com/kbidne/LeanVibes/pull/4)). `/backlog` lists every open issue, not only `backlog`-labelled ones, grouped into Workable, Due, Parked and Epics. Blocked issues get a `waiting:*` label and a `Parked:` comment, and come back on their own when the date passes or the blocking issue closes. Your AI now fixes small confirmed defects on the spot and files the rest. Each issue gets its own worktree. `/backlog-add` records `Introduced by: PR #N` and a `## Why now` section. `setup-backlog.sh` finds the project board by title, updates existing labels, and reports real failures. Cursor, Copilot and the docs were updated to match.
+- **`/review-loop`** ([#5](https://github.com/kbidne/LeanVibes/pull/5), Claude Code). Reviews a PR, fixes only blocking findings something can reach, re-reviews each fix, and ends in a verdict: `ready` (merged once the head is verified and CI is green) or `decision_needed`. Non-blocking notes go to one ledger issue. Uses `/code-review` where available and `/review-fallback` otherwise. Optional settings live in `.claude/review-loop.json`. `setup-backlog.sh --review-loop` creates its labels.
+- **`/backlog-sprint`** ([#6](https://github.com/kbidne/LeanVibes/pull/6), Claude Code). Triages the backlog by value, you approve the queue once, then each item gets an implementer PR and a review loop in the same session. Chains of follow-ups get one design note on the root issue instead of more patches. The report leads with decisions waiting on you and compares issues filed against issues closed. `setup-backlog.sh --sprint` creates its labels.
+- **Unattended runs.** Every shell step in the new commands is a single command (`.claude/scripts/workflow_state.py` handles locks, worktrees, metrics and lint and test runs), so they work under a permission allowlist and in `claude -p`. A GitHub Actions check runs the script tests and `bash -n` on every PR.
+
 ## Contributing
 
 Want to add support for another tool? PRs welcome! Each tool needs:

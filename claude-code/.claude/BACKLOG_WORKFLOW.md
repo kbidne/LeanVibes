@@ -131,6 +131,18 @@ See the command file for the rules. Non-blocking notes go to one
 | `epic` | `#3E4B9E` | Tracking issue grouping related work items |
 | `stays open` | `#BFD4F2` | Kept open on purpose (tracker); not a work item |
 
+Opt-in labels: `setup-backlog.sh --review-loop` and `--sprint` create these
+(`/review-loop` also creates its own on first use).
+
+| Label | Color | Purpose |
+|-------|-------|---------|
+| `review:ready` | `#0E8A16` | `/review-loop` verdict: verified head, CI green, mergeable |
+| `review:decision-needed` | `#D93F0B` | `/review-loop` stopped on a question for a human |
+| `review:chain` | `#FBCA04` | A chain of loop-filed follow-ups; needs a design pass on the root issue |
+| `review:ledger` | `#C2E0C6` | The issue that collects `/review-loop`'s non-blocking notes |
+| `sprint:keep` | `#BFDADC` | Queue a low-priority loop-filed issue despite the `/backlog-sprint` value floor |
+| `design:patch-separately` | `#D4C5F9` | A design note says patch this follow-up on its own; `/backlog-sprint` treats it as depth 1 |
+
 ### Parking
 
 A parked issue carries one `waiting:*` label **and** a comment whose first
@@ -341,13 +353,32 @@ Ensure you're in the correct repository and the project name matches exactly.
 
 ---
 
+## Possible Future Work
+
+Left out of `/review-loop` and `/backlog-sprint` on purpose, to keep the first
+version small. None of these is built:
+
+- **Parallel sprint lanes.** Several sessions working one sprint's queue at
+  once, each taking an item through a claim file so two lanes never pick the
+  same issue, and joining a lane that is already running.
+- **A merged multi-lane report.** One sprint report built from every lane's
+  state, instead of one report per session.
+- **Cloud-session state mirroring.** Keeping sprint state somewhere that
+  outlives an ephemeral session (the review loop already mirrors its own
+  state into its status comment; the sprint does not).
+- **Per-step timing.** Minutes per triage, implementer, review round, fix and
+  CI wait, to show where a sprint's time goes. Today only per-agent minutes
+  and the loop's wall time are recorded.
+
+---
+
 ## Contributing
 
 This workflow is open for improvements. Key areas:
-- [ ] Milestone/sprint integration
+- [ ] Milestone integration
 - [ ] Automated priority aging
 - [ ] Cross-repo backlog views
 
 ---
 
-*Workflow version 1.1 - Designed for Claude Code*
+*Workflow version 1.2 - Designed for Claude Code*
