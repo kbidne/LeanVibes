@@ -366,7 +366,12 @@ Its brief, verbatim apart from the numbers and paths:
 > 8. Run every shell step as one command with literal paths: `git -C <path>`,
 >    never `cd <path> && ...`; no `VAR=...` or `$(...)`; commit with
 >    `-m "..."` arguments, not a heredoc; write the PR body with the Write
->    tool and pass it with `--body-file`. Unattended runs deny the rest.
+>    tool to `<sd>/pr-body-N.md` (never inside the worktree: an untracked
+>    file there blocks its removal) and pass it with `--body-file`. Run lint
+>    and tests with
+>    `python3 .claude/scripts/workflow_state.py check lint --worktree <worktree>`
+>    and `... check test --worktree <worktree> --tests <paths>` (exit 2: none
+>    configured, use the project's runner). Unattended runs deny the rest.
 >
 > Return JSON only:
 > `{"status": "pr_open|blocked|failed", "issue": N, "pr": M, "url": "...",
@@ -451,7 +456,7 @@ its `auto_accepted` decisions and `rounds`, and save the state.
 Read the loop's metrics line for this PR (the highest `run`):
 
 ```bash
-jq -sc --argjson m <M> 'map(select(.type == "run" and .pr == $m)) | max_by(.run) // empty' "<common_dir>/review-loop-metrics.jsonl"
+python3 .claude/scripts/workflow_state.py metrics-show --pr <M>
 ```
 
 Go back to the top of step 3.
@@ -471,7 +476,8 @@ verbatim apart from the numbers:
 > `origin/<base>`. Do not change any file and do not open a PR.
 >
 > Write one design note, at most 60 lines, and post it as a comment on #R with
-> `gh issue comment R --body-file <file>`, headed
+> `gh issue comment R --body-file <sd>/design-R.md` (write the file with the
+> Write tool; one command per Bash call, no `cd ... &&`), headed
 > `## Design note (/backlog-sprint <sprint_id>)`. It says: (1) the pattern the
 > follow-ups share, in two or three sentences, with file:line evidence; (2) one
 > change that would retire most of them, with the files it touches and the
