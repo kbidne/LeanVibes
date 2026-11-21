@@ -155,8 +155,7 @@ itself, without asking, only if all of these hold:
 
 1. The PR's changed files pass the policy:
    ```bash
-   git diff --name-only "origin/$BASE...HEAD" > "$STATE_DIR/files.txt"
-   python3 .claude/scripts/review_loop_policy.py --files "$STATE_DIR/files.txt"
+   git diff --name-only origin/<base>...HEAD | python3 .claude/scripts/review_loop_policy.py --files -
    ```
    Exit 0: allowed. Exit 1 or 2: ask (put its `reasons` in the report).
 2. The recommended option does not leave a confirmed blocking finding open.
@@ -197,9 +196,15 @@ Review is where quality comes from, so it never drops below Opus.
 
 ## Instructions
 
-Shell variables (`$BASE`, `$MAIN`, `$W`, `$STATE_DIR`) don't persist between
-Bash calls: set them again, or spell the values out, in each call that uses
-them.
+**One command per Bash call, values spelled out.** Permission allowlists
+match command text, so a call that starts with `VAR=...`, uses `$(...)`, or
+writes into `.git/` with `mkdir`, `rm` or `>>` is denied in unattended runs.
+Write `<base>`, `<main>`, `<worktree>` and `<state dir>` below as the literal
+values you got from `.claude/scripts/workflow_state.py` (each of its
+subcommands prints one JSON object), quoting paths that contain spaces. Use
+`git -C <path>` rather than `cd <path> && git`. Read and write state files
+with the Read and Write tools, and give a commit message as one or more
+`-m "..."` arguments, not a heredoc.
 
 ### 1. Load the PR and its scope
 
@@ -208,7 +213,7 @@ gh pr view <N> --json number,title,body,url,state,isDraft,headRefName,baseRefNam
 gh repo view --json defaultBranchRef --jq .defaultBranchRef.name
 ```
 
-- Stop if the PR isn't open. Call its base `$BASE`; if it isn't the default
+- Stop if the PR isn't open. Call its base `<base>`; if it isn't the default
   branch, say so and ask whether to continue (recommend stopping if the base
   is another PR's branch that hasn't merged).
 - Find the issue: `closingIssuesReferences`, else a `#N` in the body or the
@@ -224,8 +229,8 @@ gh repo view --json defaultBranchRef --jq .defaultBranchRef.name
   rounds, and splitting before the loop is cheaper.
 - **Risky?**
   ```bash
-  git fetch -q origin "$BASE" "<head>"
-  git diff --name-only "origin/$BASE...origin/<head>" | python3 .claude/scripts/review_loop_policy.py --files -
+  git fetch -q origin <base> <head>
+  git diff --name-only origin/<base>...origin/<head> | python3 .claude/scripts/review_loop_policy.py --files -
   ```
   Record `risky` and `risky_files` from the output in the state file.
 
@@ -234,10 +239,12 @@ gh repo view --json defaultBranchRef --jq .defaultBranchRef.name
 Never work in the main checkout: other sessions may be using it.
 
 ```bash
-MAIN="$(git worktree list --porcelain | sed -n '1s/^worktree //p')"   # the path may contain a space
-git -C "$MAIN" fetch origin "<head>"
-git -C "$MAIN" worktree list --porcelain | grep -B2 "branch refs/heads/<head>$"
+python3 .claude/scripts/workflow_state.py paths
+python3 .claude/scripts/workflow_state.py worktree find <head>
 ```
+
+`paths` gives `<main>`, the main checkout; `find`
+gives the worktree that has `<head>` checked out, or `null`.
 
 - If a worktree already has `<head>` checked out, work there and run
   `git status`. Uncommitted changes there are the loop's own if the state
@@ -245,42 +252,45 @@ git -C "$MAIN" worktree list --porcelain | grep -B2 "branch refs/heads/<head>$"
   left them; keep them and resume that round. Any other uncommitted changes
   aren't the loop's: stop, show `git status`, and ask, recommending a new
   worktree at `.claude/worktrees/pr-<N>-loop`. Otherwise
-  `git pull --ff-only origin <head>`.
-- Otherwise create one:
+  `git -C <worktree> pull --ff-only origin <head>`.
+- Otherwise create one at `<main>/.claude/worktrees/pr-<N>`, linking the
+  gitignored files the tests need (`.env`, `node_modules`, a virtualenv)
+  from the main checkout with one `--link` each:
   ```bash
-  W="$MAIN/.claude/worktrees/pr-<N>"
-  git -C "$MAIN" worktree add "$W" -B "<head>" "origin/<head>"
+  python3 .claude/scripts/workflow_state.py worktree add pr-<N> <head> --link .venv
   ```
-  Symlink any gitignored files the tests need (`.env`, `node_modules`, a
-  virtualenv) from `$MAIN`.
 
-Do everything below inside that worktree.
+Do everything below inside that worktree (`git -C <worktree>`, absolute
+paths for Read/Edit, and the worktree path in every agent prompt). Don't
+spawn the fixer with worktree isolation: it works in this worktree.
 
 ### 3. Load or start the state file
 
 The state lives in the worktree's private git dir, so it is never committed
 and survives a new session:
 
-```bash
-STATE_DIR="$(git rev-parse --git-dir)/review-loop"; mkdir -p "$STATE_DIR"
-cat "$STATE_DIR/lock" "$STATE_DIR/state.json" 2>/dev/null
-```
-
-**Take the lock first.** One loop per PR. `lock` holds `{"pid": <pid>,
-"started_at": "..."}`, where `pid` is the Claude Code process (`$PPID` in a
-Bash call). A lock whose pid is alive (`kill -0 <pid>`) and isn't this
-session's means another loop is on this PR: stop, give the pid, start time
-and lock path, and add "if that session is idle or stopped, delete the lock
-and re-run". A dead pid, or this session's own pid (a resume), is stale:
-`rm -f` it. Then write yours with noclobber so two starts can't both win:
+**Take the lock first.** One loop per PR:
 
 ```bash
-(set -o noclobber; printf '{"pid": %s, "started_at": "%s"}\n' "$PPID" "$(date -u +%FT%TZ)" > "$STATE_DIR/lock")
+python3 .claude/scripts/workflow_state.py lock acquire review-loop --worktree <worktree>
 ```
 
-If that fails, the other start won: re-read the lock and stop. Every stop of
-this run removes the lock (`rm -f "$STATE_DIR/lock"`), except the stop
-"another session holds the lock".
+The lock holds `{"pid", "started_at"}`, where `pid` is this Claude Code
+session; the script replaces a lock whose pid is dead or is this session's
+own (a resume) and creates the file atomically, so two starts can't both
+win. Exit 3 means another live session holds it: stop, give the holder's
+pid, start time and the lock path, and add "if that session is idle or
+stopped, delete the lock and re-run". Every stop of this run releases the
+lock, except that one:
+
+```bash
+python3 .claude/scripts/workflow_state.py lock release review-loop --worktree <worktree>
+```
+
+The lock's output also gives `<state dir>` (the directory holding `lock`).
+Read `<state dir>/state.json` with the Read tool if it exists, and write it
+with the Write tool. Take times (`started_at`, `ended_at`) from
+`python3 .claude/scripts/workflow_state.py now`, never from memory.
 
 Shape:
 
@@ -380,7 +390,7 @@ the count, and a capped round can look clean.
 round's `reviewed_head..fixed_head`, plus anything pushed since. Spawn a
 **fresh** reviewer agent (`general-purpose`, `model: opus`). Brief it with
 exactly: the PR number and the scope statement; `git diff <reviewed_head>..HEAD`
-to review and `git diff origin/$BASE...HEAD` as context only; and the previous
+to review and `git diff origin/<base>...HEAD` as context only; and the previous
 round's findings, one line each: `[category] path:line — summary —
 disposition (ref)`. Its instructions:
 
@@ -472,7 +482,11 @@ If anything was fixed, the fixer then:
   `exclude_from_line_counts`.
 - Commits once for the round. The title says what changed, never
   `fix: #N` (that auto-closes issues): `Address review round <k> on PR #<N>: <what>`.
-- Pushes with `git push origin HEAD:<head>`. Never force-push.
+  One command: `git -C <worktree> commit -m "<title>" -m "<body>"`, no heredoc.
+- Pushes with `git -C <worktree> push origin HEAD:<head>`. Never force-push.
+- Runs every shell step as one command with literal paths: no `cd ... &&`,
+  no `VAR=...`, no multi-line `-c` scripts (write a scratch file instead).
+  Unattended runs deny those.
 
 ### 6. Check the fixer, post, file, wait for CI
 
@@ -486,7 +500,7 @@ If anything was fixed, the fixer then:
   blocking findings**:
   `**[category] summary** Fixed in <sha>: <what changed>. Pinned by <test>.`
   ```bash
-  gh api repos/{owner}/{repo}/pulls/<N>/reviews --method POST --input "$STATE_DIR/review.json"
+  gh api repos/{owner}/{repo}/pulls/<N>/reviews --method POST --input "<state dir>/review.json"
   # {"commit_id": "<reviewed_head>", "event": "COMMENT",
   #  "body": "Review loop round <k> (<kind>): <n> findings, <b> fixed",
   #  "comments": [{"path": "...", "line": 41, "side": "RIGHT", "body": "..."}]}
@@ -527,7 +541,7 @@ If anything was fixed, the fixer then:
   (`gh api repos/{owner}/{repo}/actions/jobs/<job-id>/logs | grep -E '##\[error\]'`).
   **Decide whether it's a flake before writing any fix:** likely when the
   failing test isn't in the diff **and** the same test failed on another
-  recent run (`gh run list --branch "$BASE" --limit 10`, other open PRs).
+  recent run (`gh run list --branch <base> --limit 10`, other open PRs).
   Re-run once (`gh run rerun <run-id> --failed`). Passes: the head is still
   verified; add a ledger line `[test] <test> — flaked in CI, passed on
   re-run`. Fails again: it's real; fix it in this round.
@@ -652,12 +666,14 @@ Then `gh pr merge <N> --<merge_method>`.
   head unverified. If the merge is refused, report the exact error and what
   you'd do next (rebase and re-run the loop, wait for a required check), and
   stop.
-- Read the state file one last time (step 11 needs it), then remove the
-  worktree: `git -C "$MAIN" worktree remove "$W"` (remove your own symlinks
-  first; never `--force`). Leave the remote branch alone unless the repo
-  deletes merged branches itself.
+- Read the state file one last time (step 11 needs it), release the lock
+  (step 3), then remove the worktree, which also drops the symlinks you
+  linked (never `--force`; if it refuses, report what's left in it):
+  `python3 .claude/scripts/workflow_state.py worktree remove <worktree>`.
+  Leave the remote branch alone unless the repo deletes merged branches
+  itself.
 - Check the CI run on the merge commit once
-  (`gh run list --branch "$BASE" --limit 3`). Report a failure there; don't
+  (`gh run list --branch <base> --limit 3`). Report a failure there; don't
   revert.
 
 Edit the status heading to `verdict ready (merged <sha>)` or `verdict ready
@@ -669,7 +685,7 @@ Run this last, merged or not. Append one line to a log in the main repo's git
 dir, so it outlives the worktree:
 
 ```bash
-echo '<json>' >> "$(git rev-parse --path-format=absolute --git-common-dir)/review-loop-metrics.jsonl"
+python3 .claude/scripts/workflow_state.py metrics-append review-loop-metrics.jsonl '<json on one line>'
 ```
 
 **One line per run, cumulative:** each invocation appends the PR's totals so
@@ -691,8 +707,7 @@ far with its `run` number; a reader keeps the highest `run` per PR.
 Token and minute figures come from the state file's `agents` entries, never
 from memory; a `null` entry makes `total` `null`.
 
-Release the lock (`rm -f "$STATE_DIR/lock"`; nothing to do if the worktree
-went in step 10).
+Release the lock (step 3) if step 10 didn't.
 
 **Measuring quality.** What reviewers find is not the measure; what gets past
 them is. An **escape** is a bug filed within 14 days of a loop-merged PR whose

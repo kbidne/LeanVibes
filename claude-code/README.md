@@ -96,7 +96,7 @@ The loop ends in one of two verdicts: **`ready`** (merged unless `--no-merge`) o
 - **Caps, not heuristics:** `--max-deltas` delta rounds, a per-round fix budget, at most two issues filed per PR.
 - **Follow-ups of follow-ups** are flagged as a design problem instead of filing more.
 
-Reviewers are fresh Opus agents running Claude Code's `/code-review`; where that skill is unavailable, `/review-fallback` stands in. Optional per-project settings (risky paths, lint and test commands, budgets) go in `.claude/review-loop.json`; copy `review-loop.json.example`. `.claude/scripts/review_loop_policy.py` applies the path rules (standard-library Python 3.8+).
+Reviewers are fresh Opus agents running Claude Code's `/code-review`; where that skill is unavailable, `/review-fallback` stands in. Optional per-project settings (risky paths, lint and test commands, budgets) go in `.claude/review-loop.json`; copy `review-loop.json.example`. `.claude/scripts/review_loop_policy.py` applies the path rules, and `.claude/scripts/workflow_state.py` runs the lock, worktree and metrics steps as single commands so they work under a permission allowlist (both standard-library Python 3.8+).
 
 ## Parking Issues
 
@@ -151,7 +151,8 @@ your-project/
     │   ├── review-loop.md        # /review-loop command
     │   └── review-fallback.md    # reviewer used when /code-review is unavailable
     ├── scripts/
-    │   └── review_loop_policy.py # risky / always-ask path rules
+    │   ├── review_loop_policy.py # risky / always-ask path rules
+    │   └── workflow_state.py     # locks, worktrees, metrics: one command per step
     ├── review-loop.json          # optional, from review-loop.json.example
     └── worktrees/                # Per-issue and per-PR worktrees (gitignored)
 ```

@@ -251,7 +251,8 @@ your-repo/
 │   │   ├── review-loop.md      # /review-loop command
 │   │   └── review-fallback.md  # fallback reviewer
 │   ├── scripts/
-│   │   └── review_loop_policy.py
+│   │   ├── review_loop_policy.py
+│   │   └── workflow_state.py
 │   ├── worktrees/              # Per-issue worktrees (gitignored)
 │   └── BACKLOG_WORKFLOW.md     # This documentation
 ├── .gitignore                  # Add: .claude/worktrees/
