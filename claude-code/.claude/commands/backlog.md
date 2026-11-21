@@ -42,7 +42,9 @@ Argument: $ARGUMENTS
      earlier: **due**.
    - `Parked: waiting:issue on #N`, with #N closed
      (`gh issue view N --json state`): **may be unblocked**.
-   - No `Parked:` line: leave it parked and note it in the display.
+   - No `Parked:` line, or the output was cut off (the newest comments are
+     the missing part, so the last `Parked:` seen may be stale): leave it
+     parked and note it in the display.
 
    Due and may-be-unblocked issues move to their own group.
 
