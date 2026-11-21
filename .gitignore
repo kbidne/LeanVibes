@@ -10,3 +10,6 @@
 
 # Per-issue worktrees created by /backlog
 .claude/worktrees/
+
+# Python
+__pycache__/

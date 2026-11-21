@@ -29,6 +29,7 @@ A lightweight backlog management workflow for AI coding assistants + GitHub Proj
 - **Per-Issue Worktrees** - Parallel AI sessions each work in their own git worktree
 - **GitHub Projects Integration** - Visual board for tracking progress
 - **Automatic Issue Linking** - Commits and PRs auto-reference the issue being worked on
+- **Review Loop** *(Claude Code)* - `/review-loop <PR>` reviews, fixes, re-reviews and merges a PR, ending in a verdict instead of an endless "until zero findings"
 
 ## How It Works
 
@@ -103,6 +104,22 @@ New to LeanVibes? Check out the **[example project](example/)** - a fake auth sy
 | `stays open` | Pale blue | Kept open on purpose (tracker); not a work item |
 
 Each `waiting:*` label is paired with a comment whose first line is `Parked: waiting:date until YYYY-MM-DD` (or `Parked: waiting:decision`, `Parked: waiting:issue on #N`, `Parked: waiting:external`). That is how `/backlog` knows when a parked issue is due.
+
+### Review-loop labels (optional)
+
+Created with `--review-loop` (or by `/review-loop` on first use):
+
+```bash
+curl -sL https://raw.githubusercontent.com/kbidne/LeanVibes/main/scripts/setup-backlog.sh | bash -s -- --review-loop
+```
+
+
+| Label | Purpose |
+|-------|---------|
+| `review:ready` | Verdict: verified head, CI green, mergeable |
+| `review:decision-needed` | Stopped on a question for a human |
+| `review:chain` | A chain of loop-filed follow-ups; needs a design pass on the root issue |
+| `review:ledger` | The issue that collects non-blocking review notes |
 
 ## Contributing
 
