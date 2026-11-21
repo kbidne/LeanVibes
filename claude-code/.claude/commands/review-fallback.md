@@ -87,13 +87,21 @@ claim is "this used to work". Hostile inputs no caller builds are worth
 running only at a trust boundary (request bodies, third-party payloads,
 user-edited config). Report what you ran.
 
+Write each scratch script to a file with the Write tool and run it as one
+command (`<interpreter> /tmp/review-scratch/check_x.py`, with the import path
+set inside the script). Unattended runs deny `cd <dir> && ...` and
+multi-line `-c` strings.
+
 ### 4. Try to disprove each candidate
 
 For every candidate, make one honest attempt to show it is wrong: find the
-upstream guard that prevents the scenario, the caller that never passes that
-value, or the test that already pins the behaviour. Keep it only if the
-attempt fails. Set `reachable_via` to the `file:line` of what produces the
-scenario today, or `null` if you found none. When the trigger is an event
+upstream guard that prevents the scenario, or the test that already pins the
+correct behaviour. Drop it only if that attempt succeeds. Then look for what
+produces the scenario today and set `reachable_via` to its `file:line`, or
+`null` if you found none. Finding no caller does not drop a candidate: report
+it with `reachable_via: null`, and the loop sends it to the ledger. Neither
+does "it was already wrong before this PR" when the bug sits in a line the
+diff touches. When the trigger is an event
 rather than a caller (a crash, a timeout, a signal), cite the code running
 when it happens and put the trigger in `evidence`. A scenario you reproduced
 counts as reachable.
