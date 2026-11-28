@@ -135,7 +135,7 @@ Created with `--sprint` (which implies `--review-loop`):
 
 ## Release Notes
 
-### Unreleased
+### v1.2.1
 
 - **`/backlog` reads comments with plain `gh issue view N --comments`** ([#8](https://github.com/kbidne/LeanVibes/pull/8), Claude Code). The `--jq` interpolation and the `for` loop that fetched comments could be denied under a permission allowlist in unattended runs. Cut-off output now leaves a parked issue parked instead of guessing. To update, re-copy `.claude/commands/backlog.md` ([Updating](claude-code/README.md#updating)); no new labels.
 - **Updating instructions** for Claude Code installs ([Updating](claude-code/README.md#updating)).
